@@ -30,7 +30,71 @@ module Net
       end
     end
 
+    def mkdir(remote, options={})
+      session.open_channel do |channel|
+        channel.exec "scp -rt #{remote}" do |ch, success|
+          if success
+            channel[:remote ] = remote
+            channel[:options] = options
+            begin_mkdir(channel)
+          else
+            channel.close
+            raise "could not exec scp on the remote host"
+          end
+        end
+      end
+    end
+
     private
+
+      def begin_mkdir(channel)
+        channel[:buffer    ] = Net::SSH::Buffer.new
+        channel[:state     ] = :start
+
+        channel.on_data          { |ch, data| channel[:buffer].append(data) }
+        channel.on_extended_data { |ch, type, data| debug { data } }
+        channel.on_close         { mkdir_cleanup(channel) }
+        channel.on_process       { mkdir_state_machine(channel) }
+
+        channel.on_request("exit-status") { |ch, data| channel[:exit] = data.read_long; true }
+      end
+
+      def mkdir_cleanup(channel)
+        raise "SCP process did not terminate successfully (#{channel[:exit]})" if channel[:exit] != 0
+      end
+
+      def mkdir_state_machine(channel)
+        case channel[:state]
+        when :start
+          mkdir_start_state(channel)
+        when :close
+          mkdir_close_state(channel)
+        when :finish
+          mkdir_finish_state(channel)
+        end
+      end
+
+      def mkdir_start_state(channel)
+        if check_response(channel)
+          mode = channel[:options][:mode] || 0700
+          directive = "D%04o %d %s\n" % [mode, 0, File.basename(channel[:remote])]
+          channel.send_data(directive)
+          channel[:state] = :close
+        end
+      end
+
+      def mkdir_close_state(channel)
+        if check_response(channel)
+          channel.send_data("E\n")
+          channel[:state] = :finish
+        end
+      end
+
+      def mkdir_finish_state(channel)
+        if check_response(channel)
+          channel.close
+        end
+      end
 
       DEFAULT_CHUNK_SIZE = 2048
 
