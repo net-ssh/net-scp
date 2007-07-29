@@ -107,6 +107,8 @@ module Net
           channel[:times] = nil
           channel[:remaining] = channel[:file][:size]
           channel[:state] = :read_data
+
+          progress_callback(channel, channel[:file][:name], 0, channel[:file][:size])
         when :end
           channel[:local] = File.dirname(channel[:local])
           channel[:state] = :finish if channel[:stack].empty?
@@ -124,6 +126,7 @@ module Net
         data = channel[:buffer].read!(channel[:remaining])
         channel[:io].write(data)
         channel[:remaining] -= data.length
+        progress_callback(channel, channel[:file][:name], channel[:file][:size] - channel[:remaining], channel[:file][:size])
         await_response(channel, :finish_read) if channel[:remaining] == 0
       end
 
@@ -206,6 +209,8 @@ module Net
           directive = "C%04o %d %s\n" % [mode, channel[:stat].size, File.basename(channel[:current])]
           channel.send_data(directive)
           channel[:io] = File.open(channel[:current], "rb")
+          channel[:sent] = 0
+          progress_callback(channel, channel[:current], channel[:sent], channel[:stat].size)
           await_response(channel, :send_data)
         end
       end
@@ -232,6 +237,8 @@ module Net
           channel.send_data("\0")
           await_response(channel, :next_item)
         else
+          channel[:sent] += data.length
+          progress_callback(channel, channel[:current], channel[:sent], channel[:stat].size)
           channel.send_data(data)
         end
       end
@@ -253,6 +260,10 @@ module Net
           { :type => :end }
         else raise ArgumentError, "unknown directive: #{text.inspect}"
         end
+      end
+
+      def progress_callback(channel, name, sent, total)
+        channel[:callback].call(name, sent, total) if channel[:callback]
       end
   end
 end
