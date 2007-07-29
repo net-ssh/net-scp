@@ -98,7 +98,7 @@ module Net
           channel[:stack] << directive
           channel[:times] = nil
         when :file
-          directive[:name] = channel[:options][:recursive] ?
+          directive[:name] = (channel[:options][:recursive] || File.directory?(channel[:local])) ?
             File.join(channel[:local], directive[:name]) :
             channel[:local]
 
@@ -162,15 +162,19 @@ module Net
       end
 
       def next_item_state(channel)
-        next_item = channel[:stack].last.shift
-        if next_item.nil?
-          channel[:stack].pop
-          channel[:cwd] = File.dirname(channel[:cwd])
-          channel.send_data("E\n")
-          await_response(channel, channel[:stack].empty? ? :finish : :next_item)
+        if channel[:stack].empty?
+          finish_state(channel)
         else
-          set_current(channel, next_item)
-          upload_current_state(channel)
+          next_item = channel[:stack].last.shift
+          if next_item.nil?
+            channel[:stack].pop
+            channel[:cwd] = File.dirname(channel[:cwd])
+            channel.send_data("E\n")
+            await_response(channel, channel[:stack].empty? ? :finish : :next_item)
+          else
+            set_current(channel, next_item)
+            upload_current_state(channel)
+          end
         end
       end
   
