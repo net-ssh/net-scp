@@ -66,6 +66,10 @@ module Net
       end
 
       def download_start_state(channel)
+        if channel[:options][:recursive] && !File.exists?(channel[:local])
+          Dir.mkdir(channel[:local])
+        end
+
         channel.send_data("\0")
         channel[:state] = :read_directive
       end
@@ -79,14 +83,32 @@ module Net
         when :times then
           channel[:times] = directive
         when :directory
-          channel[:stack] << directive.merge(:times => channel[:times])
+          channel[:local] = File.join(channel[:local], directive[:name])
+
+          if File.exists?(channel[:local]) && !File.directory?(channel[:local])
+            raise "#{channel[:local]} already exists and is not a directory"
+          elsif !File.exists?(channel[:local])
+            Dir.mkdir(channel[:local], directive[:mode] | 0700)
+          end
+
+          if channel[:options][:preserve] && channel[:times]
+            File.utime(channel[:times][:atime], channel[:times][:mtime], channel[:local])
+          end
+
+          channel[:stack] << directive
           channel[:times] = nil
         when :file
+          directive[:name] = channel[:options][:recursive] ?
+            File.join(channel[:local], directive[:name]) :
+            channel[:local]
+
           channel[:file] = directive.merge(:times => channel[:times])
+          channel[:io] = File.new(directive[:name], File::CREAT|File::TRUNC|File::RDWR, directive[:mode] | 0600)
           channel[:times] = nil
           channel[:remaining] = channel[:file][:size]
           channel[:state] = :read_data
         when :end
+          channel[:local] = File.dirname(channel[:local])
           channel[:state] = :finish if channel[:stack].empty?
         end
 
@@ -100,6 +122,7 @@ module Net
       def read_data_state(channel)
         return if channel[:buffer].empty?
         data = channel[:buffer].read!(channel[:remaining])
+        channel[:io].write(data)
         channel[:remaining] -= data.length
         await_response(channel, :finish_read) if channel[:remaining] == 0
       end
@@ -120,6 +143,13 @@ module Net
       end
 
       def finish_read_state(channel)
+        channel[:io].close
+
+        if channel[:options][:preserve] && channel[:file][:times]
+          File.utime(channel[:file][:times][:atime],
+            channel[:file][:times][:mtime], channel[:file][:name])
+        end
+
         channel[:file] = nil
         channel[:state] = channel[:stack].empty? ? :finish : :read_directive
         channel.send_data("\0")
@@ -206,11 +236,9 @@ module Net
         case type = text[0]
         when ?T
           parts = text[1..-1].split(/ /, 4).map { |i| i.to_i }
-          { :type       => :times,
-            :mtime_sec  => parts[0],
-            :mtime_usec => parts[1],
-            :atime_sec  => parts[2],
-            :atime_usec => parts[3] }
+          { :type  => :times,
+            :mtime => Time.at(parts[0], parts[1]),
+            :atime => Time.at(parts[2], parts[3]) }
         when ?C, ?D
           parts = text[1..-1].split(/ /, 3)
           { :type => (type == ?C ? :file : :directory),
