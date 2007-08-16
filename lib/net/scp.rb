@@ -7,6 +7,16 @@ module Net
     include Net::SSH::Loggable
     include Upload, Download
 
+    # When all you want is a quick SCP reference and don't particularly need
+    # the associated SSH session, you can use the start method.
+    def self.start(host, username, options={})
+      raise ArgumentError, "needs a block"
+      Net::SSH.start(host, username, options) do |ssh|
+        yield ssh.scp
+        ssh.loop
+      end
+    end
+
     attr_reader :session
 
     def initialize(session)
@@ -49,7 +59,7 @@ module Net
               channel.on_close                  { |ch| raise "SCP did not finish successfully (#{ch[:exit]})" if ch[:exit] != 0 }
               channel.on_data                   { |ch, data| channel[:buffer].append(data) }
               channel.on_extended_data          { |ch, type, data| debug { data.chomp } }
-              channel.on_request("exit-status") { |ch, data| channel[:exit] = data.read_long; true }
+              channel.on_request("exit-status") { |ch, data| channel[:exit] = data.read_long }
               channel.on_process                { send("#{channel[:state]}_state", channel) }
             else
               channel.close
