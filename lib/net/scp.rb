@@ -1,3 +1,5 @@
+require 'stringio'
+
 require 'net/ssh'
 require 'net/scp/upload'
 require 'net/scp/download'
@@ -10,7 +12,7 @@ module Net
     # When all you want is a quick SCP reference and don't particularly need
     # the associated SSH session, you can use the start method.
     def self.start(host, username, options={})
-      raise ArgumentError, "needs a block"
+      raise ArgumentError, "needs a block" unless block_given?
       Net::SSH.start(host, username, options) do |ssh|
         yield ssh.scp
         ssh.loop
@@ -28,10 +30,22 @@ module Net
       start_command(:upload, local, remote, options, &progress)
     end
 
+    def upload!(local, remote, options={}, &progress)
+      channel = upload(local, remote, options={}, &progress)
+      session.loop { session.channels.key?(channel.local_id) }
+    end
+
     def download(remote, local, options={}, &progress)
       start_command(:download, local, remote, options, &progress)
     end
 
+    def download!(remote, local=nil, options={}, &progress)
+      destination = local ? local : StringIO.new
+      channel = download(remote, destination, options={}, &progress)
+      session.loop { session.channels.key?(channel.local_id) }
+      local ? true : destination.string
+    end
+    
     private
 
       def scp_command(mode, options)

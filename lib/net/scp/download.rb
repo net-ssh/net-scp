@@ -4,7 +4,11 @@ module Net; class SCP
     private
 
     def download_start_state(channel)
-      if channel[:options][:recursive] && !File.exists?(channel[:local])
+      if channel[:local].respond_to?(:write) && channel[:options][:recursive]
+        raise "cannot recursively download to an in-memory location"
+      elsif channel[:local].respond_to?(:write) && channel[:options][:preserve]
+        raise "cannot preserve times when downloading to an in-memory location"
+      elsif channel[:options][:recursive] && !File.exists?(channel[:local])
         Dir.mkdir(channel[:local])
       end
 
@@ -42,7 +46,7 @@ module Net; class SCP
     end
 
     def finish_read_state(channel)
-      channel[:io].close
+      channel[:io].close unless channel[:io] == channel[:local]
 
       if channel[:options][:preserve] && channel[:file][:times]
         File.utime(channel[:file][:times][:atime],
@@ -91,12 +95,15 @@ module Net; class SCP
     end
 
     def read_file(channel, directive)
-      directive[:name] = (channel[:options][:recursive] || File.directory?(channel[:local])) ?
-        File.join(channel[:local], directive[:name]) :
-        channel[:local]
+      if !channel[:local].respond_to?(:write)
+        directive[:name] = (channel[:options][:recursive] || File.directory?(channel[:local])) ?
+          File.join(channel[:local], directive[:name]) :
+          channel[:local]
+      end
 
       channel[:file] = directive.merge(:times => channel[:times])
-      channel[:io] = File.new(directive[:name], File::CREAT|File::TRUNC|File::RDWR, directive[:mode] | 0600)
+      channel[:io] = channel[:local].respond_to?(:write) ? channel[:local] :
+        File.new(directive[:name], File::CREAT|File::TRUNC|File::RDWR, directive[:mode] | 0600)
       channel[:times] = nil
       channel[:remaining] = channel[:file][:size]
       channel[:state] = :read_data
