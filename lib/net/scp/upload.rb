@@ -6,13 +6,21 @@ module Net; class SCP
     DEFAULT_CHUNK_SIZE = 2048
 
     def upload_start_state(channel)
+      if channel[:local].respond_to?(:read) && channel[:options][:recursive]
+        raise "cannot recursively upload from an in-memory buffer"
+      elsif channel[:local].respond_to?(:read) && channel[:options][:preserve]
+        raise "cannot preserve access times from an in-memory buffer"
+      end
+
       channel[:chunk_size] = channel[:options][:chunk_size] || DEFAULT_CHUNK_SIZE
       set_current(channel, channel[:local])
       await_response(channel, :upload_current)
     end
 
     def upload_current_state(channel)
-      if File.directory?(channel[:current])
+      if channel[:current].respond_to?(:read)
+        upload_file_state(channel)
+      elsif File.directory?(channel[:current])
         raise ArgumentError, "can't upload directories unless :recursive" unless channel[:options][:recursive]
         upload_directory_state(channel)
       elsif File.file?(channel[:current])
@@ -35,12 +43,13 @@ module Net; class SCP
 
     def upload_file_state(channel)
       if preserve_attributes_if_requested(channel)
-        mode = channel[:stat].mode & 07777
-        directive = "C%04o %d %s\n" % [mode, channel[:stat].size, File.basename(channel[:current])]
+        mode = channel[:stat] ? channel[:stat].mode & 07777 : channel[:options][:mode]
+        channel[:name] = channel[:current].respond_to?(:read) ? channel[:remote] : channel[:current]
+        directive = "C%04o %d %s\n" % [mode || 0640, channel[:size], File.basename(channel[:name])]
         channel.send_data(directive)
-        channel[:io] = File.open(channel[:current], "rb")
+        channel[:io] = channel[:current].respond_to?(:read) ? channel[:current] : File.open(channel[:current], "rb")
         channel[:sent] = 0
-        progress_callback(channel, channel[:current], channel[:sent], channel[:stat].size)
+        progress_callback(channel, channel[:name], channel[:sent], channel[:size])
         await_response(channel, :send_data)
       end
     end
@@ -48,12 +57,12 @@ module Net; class SCP
     def send_data_state(channel)
       data = channel[:io].read(channel[:chunk_size])
       if data.nil?
-        channel[:io].close
+        channel[:io].close unless channel[:local].respond_to?(:read)
         channel.send_data("\0")
         await_response(channel, :next_item)
       else
         channel[:sent] += data.length
-        progress_callback(channel, channel[:current], channel[:sent], channel[:stat].size)
+        progress_callback(channel, channel[:name], channel[:sent], channel[:size])
         channel.send_data(data)
       end
     end
@@ -78,7 +87,14 @@ module Net; class SCP
     def set_current(channel, path)
       path = channel[:cwd] ? File.join(channel[:cwd], path) : path
       channel[:current] = path
-      channel[:stat] = File.stat(path)
+
+      if channel[:current].respond_to?(:read)
+        channel[:stat] = channel[:current].stat if channel[:current].respond_to?(:stat)
+      else
+        channel[:stat] = File.stat(channel[:current])
+      end
+
+      channel[:size] = channel[:stat] ? channel[:stat].size : channel[:current].size
     end
 
     def preserve_attributes_if_requested(channel)

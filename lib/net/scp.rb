@@ -19,6 +19,20 @@ module Net
       end
     end
 
+    def self.upload(host, username, local, remote, options={}, &progress)
+      ssh_options = options[:ssh] || {}
+      Net::SSH.start(host, username, ssh_options) do |ssh|
+        ssh.scp.upload!(local, remote, options, &progress)
+      end
+    end
+
+    def self.download(host, username, remote, local=nil, options={}, &progress)
+      ssh_options = options[:ssh] || {}
+      Net::SSH.start(host, username, ssh_options) do |ssh|
+        return ssh.scp.download!(remote, local, options, &progress)
+      end
+    end
+
     attr_reader :session
 
     def initialize(session)
@@ -31,8 +45,7 @@ module Net
     end
 
     def upload!(local, remote, options={}, &progress)
-      channel = upload(local, remote, options={}, &progress)
-      session.loop { session.channels.key?(channel.local_id) }
+      upload(local, remote, options, &progress).wait
     end
 
     def download(remote, local, options={}, &progress)
@@ -41,8 +54,7 @@ module Net
 
     def download!(remote, local=nil, options={}, &progress)
       destination = local ? local : StringIO.new
-      channel = download(remote, destination, options={}, &progress)
-      session.loop { session.channels.key?(channel.local_id) }
+      download(remote, destination, options, &progress).wait
       local ? true : destination.string
     end
     
