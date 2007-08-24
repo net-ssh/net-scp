@@ -111,7 +111,7 @@ module Net
       end
 
       def finish_state(channel)
-        channel.close
+        channel.eof!
       end
 
       def progress_callback(channel, name, sent, total)
