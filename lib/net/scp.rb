@@ -1,6 +1,7 @@
 require 'stringio'
 
 require 'net/ssh'
+require 'net/scp/errors'
 require 'net/scp/upload'
 require 'net/scp/download'
 
@@ -76,7 +77,7 @@ module Net
             if success
               channel[:local   ] = local
               channel[:remote  ] = remote
-              channel[:options ] = options
+              channel[:options ] = options.dup
               channel[:callback] = callback
               channel[:buffer  ] = Net::SSH::Buffer.new
               channel[:state   ] = :"#{mode}_start"

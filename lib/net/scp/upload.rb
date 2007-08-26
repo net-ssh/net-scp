@@ -1,3 +1,5 @@
+require 'net/scp/errors'
+
 module Net; class SCP
 
   module Upload
@@ -6,10 +8,9 @@ module Net; class SCP
     DEFAULT_CHUNK_SIZE = 2048
 
     def upload_start_state(channel)
-      if channel[:local].respond_to?(:read) && channel[:options][:recursive]
-        raise "cannot recursively upload from an in-memory buffer"
-      elsif channel[:local].respond_to?(:read) && channel[:options][:preserve]
-        raise "cannot preserve access times from an in-memory buffer"
+      if channel[:local].respond_to?(:read)
+        channel[:options].delete(:recursive)
+        channel[:options].delete(:preserve)
       end
 
       channel[:chunk_size] = channel[:options][:chunk_size] || DEFAULT_CHUNK_SIZE
@@ -21,12 +22,12 @@ module Net; class SCP
       if channel[:current].respond_to?(:read)
         upload_file_state(channel)
       elsif File.directory?(channel[:current])
-        raise ArgumentError, "can't upload directories unless :recursive" unless channel[:options][:recursive]
+        raise Net::SCP::Error, "can't upload directories unless :recursive" unless channel[:options][:recursive]
         upload_directory_state(channel)
       elsif File.file?(channel[:current])
         upload_file_state(channel)
       else
-        raise ArgumentError, "not a directory or a regular file: #{channel[:current].inspect}"
+        raise Net::SCP::Error, "not a directory or a regular file: #{channel[:current].inspect}"
       end
     end
 
