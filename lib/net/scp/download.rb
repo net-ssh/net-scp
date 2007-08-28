@@ -1,3 +1,5 @@
+require 'net/scp/errors'
+
 module Net; class SCP
 
   module Download
@@ -5,9 +7,10 @@ module Net; class SCP
 
     def download_start_state(channel)
       if channel[:local].respond_to?(:write) && channel[:options][:recursive]
-        raise "cannot recursively download to an in-memory location"
+        raise Net::SCP::Error, "cannot recursively download to an in-memory location"
       elsif channel[:local].respond_to?(:write) && channel[:options][:preserve]
-        raise "cannot preserve times when downloading to an in-memory location"
+        log { ":preserve option is ignored when downloading to an in-memory buffer" }
+        channel[:options].delete(:preserve)
       elsif channel[:options][:recursive] && !File.exists?(channel[:local])
         Dir.mkdir(channel[:local])
       end
@@ -42,7 +45,7 @@ module Net; class SCP
       channel[:io].write(data)
       channel[:remaining] -= data.length
       progress_callback(channel, channel[:file][:name], channel[:file][:size] - channel[:remaining], channel[:file][:size])
-      await_response(channel, :finish_read) if channel[:remaining] == 0
+      await_response(channel, :finish_read) if channel[:remaining] <= 0
     end
 
     def finish_read_state(channel)
