@@ -33,6 +33,7 @@ module Net; class SCP
         read_file(channel, directive)
       when :end
         channel[:local] = File.dirname(channel[:local])
+        channel[:stack].pop
         channel[:state] = :finish if channel[:stack].empty?
       end
 
@@ -81,6 +82,10 @@ module Net; class SCP
     end
 
     def read_directory(channel, directive)
+      if !channel[:options][:recursive]
+        raise Net::SCP::Error, ":recursive not specified for directory download"
+      end
+
       channel[:local] = File.join(channel[:local], directive[:name])
 
       if File.exists?(channel[:local]) && !File.directory?(channel[:local])

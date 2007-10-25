@@ -90,16 +90,18 @@ class Net::SCP::TestCase < Test::Unit::TestCase
       end
 
       def file(name, *args)
-        entries << FileEntry.new(File.join(path, name), *args)
+        (entries << FileEntry.new(File.join(path, name), *args)).last
       end
 
       def directory(name, *args)
         entry = DirectoryEntry.new(File.join(path, name), *args)
         yield entry if block_given?
-        entries << entry
+        (entries << entry).last
       end
 
       def stub!
+        Dir.stubs(:mkdir).with { |*a| a.first == path }
+
         stat = Mocha::Mock.new(false, "file::stat")
         stat.stubs(:size => 1024, :mode => mode, :mtime => mtime, :atime => atime, :directory? => true)
 
