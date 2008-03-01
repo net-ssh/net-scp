@@ -6,17 +6,6 @@ require 'test/unit'
 require 'mocha'
 
 class Net::SSH::Test::Channel
-  alias original_gets_data gets_data
-  def gets_data(data)
-    original_gets_data(data)
-
-    # to force each data packet to be processed in a single process iteration,
-    # rather than letting two data packets get clumped together in a single
-    # iteration. this is just a hack, though, to work around an implementation
-    # side-effect of the Net::SSH::Test code :(
-    original_gets_data("")
-  end
-
   def gets_ok
     gets_data "\0"
   end
