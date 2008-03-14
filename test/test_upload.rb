@@ -1,4 +1,3 @@
-$LOAD_PATH.unshift File.dirname(__FILE__)
 require 'common'
 
 class TestUpload < Net::SCP::TestCase
