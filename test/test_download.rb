@@ -34,8 +34,11 @@ class TestDownload < Net::SCP::TestCase
       channel.gets_data "C0666 12000 remote.txt\n"
       channel.sends_ok
       channel.gets_data "a" * 3000
+      channel.inject_remote_delay!
       channel.gets_data "b" * 3000
+      channel.inject_remote_delay!
       channel.gets_data "c" * 3000
+      channel.inject_remote_delay!
       channel.gets_data "d" * 3000
       channel.gets_ok
       channel.sends_ok
