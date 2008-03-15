@@ -13,24 +13,32 @@ module Net
     # When all you want is a quick SCP reference and don't particularly need
     # the associated SSH session, you can use the start method.
     def self.start(host, username, options={})
-      raise ArgumentError, "needs a block" unless block_given?
-      Net::SSH.start(host, username, options) do |ssh|
-        yield ssh.scp
-        ssh.loop
+      session = Net::SSH.start(host, username, options)
+      scp = new(session)
+
+      if block_given?
+        begin
+          yield scp
+          session.loop
+        ensure
+          session.close
+        end
+      else
+        return scp
       end
     end
 
-    def self.upload(host, username, local, remote, options={}, &progress)
-      ssh_options = options[:ssh] || {}
-      Net::SSH.start(host, username, ssh_options) do |ssh|
-        ssh.scp.upload!(local, remote, options, &progress)
+    def self.upload!(host, username, local, remote, options={}, &progress)
+      options = options.dup
+      start(host, username, options.delete(:ssh) || {}) do |scp|
+        scp.upload!(local, remote, options, &progress)
       end
     end
 
-    def self.download(host, username, remote, local=nil, options={}, &progress)
-      ssh_options = options[:ssh] || {}
-      Net::SSH.start(host, username, ssh_options) do |ssh|
-        return ssh.scp.download!(remote, local, options, &progress)
+    def self.download!(host, username, remote, local=nil, options={}, &progress)
+      options = options.dup
+      start(host, username, options.delete(:ssh) || {}) do |scp|
+        return scp.download!(remote, local, options, &progress)
       end
     end
 
@@ -58,7 +66,7 @@ module Net
       download(remote, destination, options, &progress).wait
       local ? true : destination.string
     end
-    
+
     private
 
       def scp_command(mode, options)
@@ -83,14 +91,14 @@ module Net
               channel[:state   ] = :"#{mode}_start"
               channel[:stack   ] = []
 
-              channel.on_close                  { |ch| raise "SCP did not finish successfully (#{ch[:exit]})" if ch[:exit] != 0 }
+              channel.on_close                  { |ch| raise Net::SCP::Error, "SCP did not finish successfully (#{ch[:exit]})" if ch[:exit] != 0 }
               channel.on_data                   { |ch, data| channel[:buffer].append(data) }
               channel.on_extended_data          { |ch, type, data| debug { data.chomp } }
               channel.on_request("exit-status") { |ch, data| channel[:exit] = data.read_long }
               channel.on_process                { send("#{channel[:state]}_state", channel) }
             else
               channel.close
-              raise "could not exec scp on the remote host"
+              raise Net::SCP::Error, "could not exec scp on the remote host"
             end
           end
         end

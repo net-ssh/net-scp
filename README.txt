@@ -20,17 +20,17 @@ In a nutshell:
   require 'net/scp'
 
   # upload a file to a remote server
-  Net::SCP.upload("remote.host.com", "username",
+  Net::SCP.upload!("remote.host.com", "username",
     "/local/path", "/remote/path",
     :password => "password")
 
   # download a file from a remote server
-  Net::SCP.download("remote.host.com", "username",
+  Net::SCP.download!("remote.host.com", "username",
     "/remote/path", "/local/path",
     :password => password)
 
   # download a file to an in-memory buffer
-  data = Net::SCP::download("remote.host.com", "username", "/remote/path")
+  data = Net::SCP::download!("remote.host.com", "username", "/remote/path")
 
   # use a persistent connection to transfer files
   Net::SCP.start("remote.host.com", "username", :password => "password") do |scp|
