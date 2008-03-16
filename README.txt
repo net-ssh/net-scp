@@ -4,14 +4,14 @@
 
 == DESCRIPTION:
 
-Net::SCP is a pure-Ruby implementation of the SCP protocol. This operates over SSH (and requires the Net::SSH library), and allows files and directory trees to copied toand from a remote server.
+Net::SCP is a pure-Ruby implementation of the SCP protocol. This operates over SSH (and requires the Net::SSH library), and allows files and directory trees to copied to and from a remote server.
 
 == FEATURES/PROBLEMS:
 
 * Transfer files or entire directory trees to or from a remote host via SCP
 * Can preserve file attributes across transfers
 * Can download files in-memory, or direct-to-disk
-* Support for OpenURI
+* Support for SCP URI's, and OpenURI
 
 == SYNOPSIS:
 
