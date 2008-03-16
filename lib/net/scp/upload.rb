@@ -130,7 +130,7 @@ module Net; class SCP
         directive = "T%d %d %d %d\n" % [stat.mtime.to_i, stat.mtime.usec, stat.atime.to_i, stat.atime.usec]
         channel.send_data(directive)
         type = stat.directory? ? :directory : :file
-        await_response(channel, :"upload_#{type}")
+        await_response(channel, "upload_#{type}")
         return false
       else
         channel[:preserved] = false

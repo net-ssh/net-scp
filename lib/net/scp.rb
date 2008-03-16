@@ -345,7 +345,7 @@ module Net
               channel[:options ] = options.dup
               channel[:callback] = callback
               channel[:buffer  ] = Net::SSH::Buffer.new
-              channel[:state   ] = :"#{mode}_start"
+              channel[:state   ] = "#{mode}_start"
               channel[:stack   ] = []
 
               channel.on_close                  { |ch| raise Net::SCP::Error, "SCP did not finish successfully (#{ch[:exit]})" if ch[:exit] != 0 }
@@ -367,7 +367,7 @@ module Net
       # at +next_state+ and continue processing.
       def await_response(channel, next_state)
         channel[:state] = :await_response
-        channel[:next ] = next_state
+        channel[:next ] = next_state.to_sym
         # check right away, to see if the response is immediately available
         await_response_state(channel)
       end
@@ -383,7 +383,7 @@ module Net
         c = channel[:buffer].read_byte
         raise "#{c.chr}#{channel[:buffer].read}" if c != 0
         channel[:next], channel[:state] = nil, channel[:next]
-        send(:"#{channel[:state]}_state", channel)
+        send("#{channel[:state]}_state", channel)
       end
 
       # The action invoked when the state machine is in the "finish" state.
