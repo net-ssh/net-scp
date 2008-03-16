@@ -2,9 +2,18 @@ require 'net/scp/errors'
 
 module Net; class SCP
 
+  # This module implements the state machine for downloading information from
+  # a remote server. It exposes no public methods. See Net::SCP#download for
+  # a discussion of how to use Net::SCP to download data.
   module Download
     private
 
+    # This is the starting state for the download state machine. The
+    # #start_command method puts the state machine into this state the first
+    # time the channel is processed. This state does some basic error checking
+    # and scaffolding and then sends a 0-byte to the remote server, indicating
+    # readiness to proceed. Then, the state machine is placed into the
+    # "read directive" state (see #read_directive_state).
     def download_start_state(channel)
       if channel[:local].respond_to?(:write) && channel[:options][:recursive]
         raise Net::SCP::Error, "cannot recursively download to an in-memory location"
@@ -19,6 +28,9 @@ module Net; class SCP
       channel[:state] = :read_directive
     end
 
+    # This state parses the next full line (up to a new-line) for the next
+    # directive. (See the SCP protocol documentation in Net::SCP for the
+    # possible directives).
     def read_directive_state(channel)
       return unless line = channel[:buffer].read_to("\n")
       channel[:buffer].consume!
@@ -40,6 +52,9 @@ module Net; class SCP
       channel.send_data("\0")
     end
 
+    # Reads data from the channel for as long as there is data remaining to
+    # be read. As soon as there is no more data to read for the current file,
+    # the state machine switches to #finish_read_state.
     def read_data_state(channel)
       return if channel[:buffer].empty?
       data = channel[:buffer].read!(channel[:remaining])
@@ -49,6 +64,10 @@ module Net; class SCP
       await_response(channel, :finish_read) if channel[:remaining] <= 0
     end
 
+    # Finishes off the read, sets the times for the file (if any), and then
+    # jumps to either #finish_state (for single-file downloads) or
+    # #read_directive_state (for recursive downloads). A 0-byte is sent to the
+    # server to indicate that the file was recieved successfully.
     def finish_read_state(channel)
       channel[:io].close unless channel[:io] == channel[:local]
 
@@ -62,6 +81,10 @@ module Net; class SCP
       channel.send_data("\0")
     end
 
+    # Parses the given +text+ to extract which SCP directive it contains. It
+    # then returns a hash with at least one key, :type, which describes what
+    # type of directive it is. The hash may also contain other, directive-specific
+    # data.
     def parse_directive(text)
       case type = text[0]
       when ?T
@@ -81,6 +104,8 @@ module Net; class SCP
       end
     end
 
+    # Sets the new directory as the current directory, creates the directory
+    # if it does not exist, and then falls back into #read_directive_state.
     def read_directory(channel, directive)
       if !channel[:options][:recursive]
         raise Net::SCP::Error, ":recursive not specified for directory download"
@@ -102,6 +127,8 @@ module Net; class SCP
       channel[:times] = nil
     end
 
+    # Opens the given file locally, and switches to #read_data_state to do the
+    # actual read.
     def read_file(channel, directive)
       if !channel[:local].respond_to?(:write)
         directive[:name] = (channel[:options][:recursive] || File.directory?(channel[:local])) ?

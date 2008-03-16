@@ -67,6 +67,85 @@ module Net
   # will be invoked, indicating the name of the file (local for downloads,
   # remote for uploads), the number of bytes that have been sent or received
   # so far for the file, and the size of the file.
+  #
+  #--
+  # = Protocol Description
+  #
+  # Although this information has zero relevance to consumers of the Net::SCP
+  # library, I'm documenting it here so that anyone else looking for documentation
+  # of the SCP protocol won't be left high-and-dry like I was. The following is
+  # reversed engineered from the OpenSSH SCP implementation, and so may
+  # contain errors. You have been warned!
+  #
+  # The first step is to invoke the "scp" command on the server. It accepts
+  # the following parameters, which must be set correctly to avoid errors:
+  #
+  # * "-t" -- tells the remote scp process that data will be sent "to" it,
+  #   e.g., that data will be uploaded and it should initialize itself
+  #   accordingly.
+  # * "-f" -- tells the remote scp process that data should come "from" it,
+  #   e.g., that data will be downloaded and it should initialize itself
+  #   accordingly.
+  # * "-v" -- verbose mode; the remote scp process should chatter about what
+  #   it is doing via stderr.
+  # * "-p" -- preserve timestamps. 'T' directives (see below) should be/will
+  #   be sent to indicate the modification and access times of each file.
+  # * "-r" -- recursive transfers should be allowed. Without this, it is an
+  #   error to upload or download a directory.
+  #
+  # After those flags, the name of the remote file/directory should be passed
+  # as the sole non-switch argument to scp.
+  #
+  # Then the fun begins. If you're doing a download, enter the download_start_state.
+  # Otherwise, look for upload_start_state.
+  #
+  # == Net::SCP::Download#download_start_state
+  #
+  # This is the start state for downloads. It simply sends a 0-byte to the
+  # server. The next state is Net::SCP::Download#read_directive_state.
+  #
+  # == Net::SCP::Download#read_directive_state
+  #
+  # Reads a directive line from the input. The following directives are
+  # recognized:
+  #
+  # * T%d %d %d %d -- a "times" packet. Indicates that the next file to be
+  #   downloaded must have mtime/usec/atime/usec attributes preserved.
+  # * D%o %d %s -- a directory change. The process is changing to a directory
+  #   with the given permissions/size/name, and the recipient should create
+  #   a directory with the same name and permissions. Subsequent files and
+  #   directories will be children of this directory, until a matching 'E'
+  #   directive.
+  # * C%o %d %s -- a file is being sent next. The file will have the given
+  #   permissions/size/name. Immediately following this line, +size+ bytes
+  #   will be sent, raw.
+  # * E -- terminator directive. Indicates the end of a directory, and subsequent
+  #   files and directories should be received by the parent of the current
+  #   directory.
+  #
+  # If a 'C' directive is received, we switch over to
+  # Net::SCP::Download#read_data_state. If an 'E' directive is received, and
+  # there is no parent directory, we switch over to Net::SCP#finish_state.
+  #
+  # == Net::SCP::Download#read_data_state
+  #
+  # Bytes are read to satisfy the size of the incoming file. When all pending
+  # data has been read, we switch to the Net::SCP::Download#finish_read_state.
+  #
+  # == Net::SCP::Download#finish_read_state
+  #
+  # We sent a 0-byte to the server to indicate that the file was successfully
+  # received. If there is no parent directory, then we're downloading a single
+  # file and we switch to Net::SCP#finish_state. Otherwise we jump back to the
+  # Net::SCP::Download#read_directive state to see what we get to download next.
+  #
+  # == Net::SCP#finish_state
+  #
+  # Tells the server that no more data is forthcoming from this end of the
+  # pipe (via Net::SSH::Connection::Channel#eof!) and leaves the pipe to drain.
+  # It will be terminated when the remote process closes with an exit status
+  # of zero.
+  #++
   class SCP
     include Net::SSH::Loggable
     include Upload, Download
@@ -198,6 +277,10 @@ module Net
 
     private
 
+      # Constructs the scp command line needed to initiate and SCP session
+      # for the given +mode+ (:upload or :download) and with the given options
+      # (:verbose, :recursive, :preserve). Returns the command-line as a
+      # string, ready to execute.
       def scp_command(mode, options)
         command = "scp "
         command << (mode == :upload ? "-t" : "-f")
@@ -207,6 +290,10 @@ module Net
         command
       end
 
+      # Opens a new SSH channel and executes the necessary SCP command over
+      # it (see #scp_command). It then sets up the necessary callbacks, and
+      # sets up a state machine to use to process the upload or download.
+      # (See Net::SCP::Upload and Net::SCP::Download).
       def start_command(mode, local, remote, options={}, &callback)
         session.open_channel do |channel|
           command = "#{scp_command(mode, options)} #{remote}"
@@ -233,6 +320,10 @@ module Net
         end
       end
 
+      # Causes the state machine to enter the "await response" state, where
+      # things just pause until the server replies with a 0 (see
+      # #await_response_state), at which point the state machine will pick up
+      # at +next_state+ and continue processing.
       def await_response(channel, next_state)
         channel[:state] = :await_response
         channel[:next ] = next_state
@@ -240,6 +331,12 @@ module Net
         await_response_state(channel)
       end
 
+      # The action invoked while the state machine remains in the "await
+      # response" state. As long as there is no data ready to process, the
+      # machine will remain in this state. As soon as the server replies with
+      # an integer 0 as the only byte, the state machine is kicked into the
+      # next state (see +await_response+). If the response is not a 0, an
+      # exception is raised.
       def await_response_state(channel)
         return if channel[:buffer].available == 0
         c = channel[:buffer].read_byte
@@ -248,10 +345,15 @@ module Net
         send(:"#{channel[:state]}_state", channel)
       end
 
+      # The action invoked when the state machine is in the "finish" state.
+      # It just tells the server not to expect any more data from this end
+      # of the pipe, and allows the pipe to drain until the server closes it.
       def finish_state(channel)
         channel.eof!
       end
 
+      # Invoked to report progress back to the client. If a callback was not
+      # set, this does nothing.
       def progress_callback(channel, name, sent, total)
         channel[:callback].call(name, sent, total) if channel[:callback]
       end
@@ -259,6 +361,8 @@ module Net
 end
 
 class Net::SSH::Connection::Session
+  # Provides a convenient way to initialize a SCP session given a Net::SSH
+  # session. Returns the Net::SCP instance, ready to use.
   def scp
     @scp ||= Net::SCP.new(self)
   end
