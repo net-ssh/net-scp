@@ -2,11 +2,18 @@ require 'net/scp/errors'
 
 module Net; class SCP
 
+  # This module implements the state machine for uploading information to
+  # a remote server. It exposes no public methods. See Net::SCP#upload for
+  # a discussion of how to use Net::SCP to upload data.
   module Upload
     private
 
+    # The default read chunk size, if an explicit chunk-size is not specified
+    # by the client.
     DEFAULT_CHUNK_SIZE = 2048
 
+    # The start state for uploads. Simply sets up the upload scaffolding,
+    # sets the current item to upload, and jumps to #upload_current_state.
     def upload_start_state(channel)
       if channel[:local].respond_to?(:read)
         channel[:options].delete(:recursive)
@@ -18,6 +25,9 @@ module Net; class SCP
       await_response(channel, :upload_current)
     end
 
+    # Determines what the next thing to upload is, and branches. If the next
+    # item is a file, goes to #upload_file_state. If it is a directory, goes
+    # to #upload_directory_state.
     def upload_current_state(channel)
       if channel[:current].respond_to?(:read)
         upload_file_state(channel)
@@ -31,6 +41,8 @@ module Net; class SCP
       end
     end
 
+    # After transferring attributes (if requested), sends a 'D' directive and
+    # awaites the server's 0-byte response. Then goes to #next_item_state.
     def upload_directory_state(channel)
       if preserve_attributes_if_requested(channel)
         mode = channel[:stat].mode & 07777
@@ -42,6 +54,8 @@ module Net; class SCP
       end
     end
 
+    # After transferring attributes (if requested), sends a 'C' directive and
+    # awaits the server's 0-byte response. Then goes to #send_data_state.
     def upload_file_state(channel)
       if preserve_attributes_if_requested(channel)
         mode = channel[:stat] ? channel[:stat].mode & 07777 : channel[:options][:mode]
@@ -55,6 +69,8 @@ module Net; class SCP
       end
     end
 
+    # If any data remains to be transferred from the current file, sends it.
+    # Otherwise, sends a 0-byte and transfers to #next_item_state.
     def send_data_state(channel)
       data = channel[:io].read(channel[:chunk_size])
       if data.nil?
@@ -68,6 +84,11 @@ module Net; class SCP
       end
     end
 
+    # Checks the work queue to see what needs to be done next. If there is
+    # nothing to do, calls Net::SCP#finish_state. If we're at the end of a
+    # directory, sends an 'E' directive and waits for the server to respond
+    # before moving to #next_item_state. Otherwise, sets the next thing to
+    # upload and moves to #upload_current_state.
     def next_item_state(channel)
       if channel[:stack].empty?
         finish_state(channel)
@@ -85,6 +106,7 @@ module Net; class SCP
       end
     end
 
+    # Sets the given +path+ as the new current item to upload.
     def set_current(channel, path)
       path = channel[:cwd] ? File.join(channel[:cwd], path) : path
       channel[:current] = path
@@ -98,6 +120,9 @@ module Net; class SCP
       channel[:size] = channel[:stat] ? channel[:stat].size : channel[:current].size
     end
 
+    # If the :preserve option is set, send a 'T' directive and wait for the
+    # server to respond before proceeding to either #upload_file_state or
+    # #upload_directory_state, depending on what is being uploaded.
     def preserve_attributes_if_requested(channel)
       if channel[:options][:preserve] && !channel[:preserved]
         channel[:preserved] = true

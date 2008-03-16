@@ -104,6 +104,11 @@ module Net
   # This is the start state for downloads. It simply sends a 0-byte to the
   # server. The next state is Net::SCP::Download#read_directive_state.
   #
+  # == Net::SCP::Upload#upload_start_state
+  #
+  # Sets up the initial upload scaffolding and waits for a 0-byte from the
+  # server, and then switches to Net::SCP::Upload#upload_current_state.
+  #
   # == Net::SCP::Download#read_directive_state
   #
   # Reads a directive line from the input. The following directives are
@@ -127,10 +132,14 @@ module Net
   # Net::SCP::Download#read_data_state. If an 'E' directive is received, and
   # there is no parent directory, we switch over to Net::SCP#finish_state.
   #
+  # Regardless of what the next state is, we send a 0-byte to the server
+  # before moving to the next state.
+  #
   # == Net::SCP::Download#read_data_state
   #
   # Bytes are read to satisfy the size of the incoming file. When all pending
-  # data has been read, we switch to the Net::SCP::Download#finish_read_state.
+  # data has been read, we wait for the server to send a 0-byte, and then we
+  # switch to the Net::SCP::Download#finish_read_state.
   #
   # == Net::SCP::Download#finish_read_state
   #
@@ -138,6 +147,35 @@ module Net
   # received. If there is no parent directory, then we're downloading a single
   # file and we switch to Net::SCP#finish_state. Otherwise we jump back to the
   # Net::SCP::Download#read_directive state to see what we get to download next.
+  #
+  # == Net::SCP::Upload#upload_current_state
+  #
+  # If the current item is a file, send a file. Sending a file starts with a
+  # 'T' directive (if :preserve is true), then a wait for the server to respond,
+  # and then a 'C' directive, and then a wait for the server to respond, and
+  # then a jump to Net::SCP::Upload#send_data_state.
+  #
+  # If current item is a directory, send a 'D' directive, and wait for the
+  # server to respond with a 0-byte. Then jump to Net::SCP::Upload#next_item_state.
+  #
+  # == Net::SCP::Upload#send_data_state
+  #
+  # Reads and sends the next chunk of data to the server. The state machine
+  # remains in this state until all data has been sent, at which point we
+  # send a 0-byte to the server, and wait for the server to respond with a
+  # 0-byte of its own. Then we jump back to Net::SCP::Upload#next_item_state.
+  #
+  # == Net::SCP::Upload#next_item_state
+  #
+  # If there is nothing left to upload, and there is no parent directory,
+  # jump to Net::SCP#finish_state.
+  #
+  # If there is nothing left to upload from the current directory, send an
+  # 'E' directive and wait for the server to respond with a 0-byte. Then go
+  # to Net::SCP::Upload#next_item_state.
+  #
+  # Otherwise, set the current upload source and go to
+  # Net::SCP::Upload#upload_current_state.
   #
   # == Net::SCP#finish_state
   #
@@ -218,7 +256,10 @@ module Net
     # * :preserve - the atime and mtime of the file should be preserved.
     # * :verbose - the process should result in verbose output on the server
     #   end (useful for debugging).
-    # 
+    # # :chunk_size - the size of each "chunk" that should be sent. Defaults
+    #   to 2048. Changing this value may improve throughput at the expense
+    #   of decreasing interactivity.
+    #
     # This method will return immediately, returning the Net::SSH::Connection::Channel
     # object that will support the upload. To wait for the upload to finish,
     # you can either call the #wait method on the channel, or otherwise run
