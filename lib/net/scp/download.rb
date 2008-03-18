@@ -18,7 +18,7 @@ module Net; class SCP
       if channel[:local].respond_to?(:write) && channel[:options][:recursive]
         raise Net::SCP::Error, "cannot recursively download to an in-memory location"
       elsif channel[:local].respond_to?(:write) && channel[:options][:preserve]
-        log { ":preserve option is ignored when downloading to an in-memory buffer" }
+        lwarn { ":preserve option is ignored when downloading to an in-memory buffer" }
         channel[:options].delete(:preserve)
       elsif channel[:options][:recursive] && !File.exists?(channel[:local])
         Dir.mkdir(channel[:local])
