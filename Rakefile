@@ -31,7 +31,7 @@ Hoe.new('net-scp', version) do |p|
   p.email          = "jamis@jamisbuck.org"
   p.summary        = "A pure Ruby implementation of the SCP client protocol"
   p.url            = "http://net-ssh.rubyforge.org/scp"
-  p.extra_deps     << [["net-ssh", ">= 1.99.1"]]
+  p.extra_deps     = [["net-ssh", ">= 1.99.1"]]
   p.need_zip       = true
   p.rubyforge_name = "net-ssh"
 end
