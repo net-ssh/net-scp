@@ -58,8 +58,8 @@ For more information, see Net::SCP.
 
 If you wish to run the tests, you'll also need:
 
-* Hoe
-* Mocha
+* Echoe (for Rakefile use)
+* Mocha (for tests)
 
 == INSTALL:
 
