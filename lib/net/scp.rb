@@ -256,7 +256,7 @@ module Net
     # * :preserve - the atime and mtime of the file should be preserved.
     # * :verbose - the process should result in verbose output on the server
     #   end (useful for debugging).
-    # # :chunk_size - the size of each "chunk" that should be sent. Defaults
+    # * :chunk_size - the size of each "chunk" that should be sent. Defaults
     #   to 2048. Changing this value may improve throughput at the expense
     #   of decreasing interactivity.
     #
@@ -396,7 +396,7 @@ module Net
       # Invoked to report progress back to the client. If a callback was not
       # set, this does nothing.
       def progress_callback(channel, name, sent, total)
-        channel[:callback].call(name, sent, total) if channel[:callback]
+        channel[:callback].call(channel, name, sent, total) if channel[:callback]
       end
   end
 end
