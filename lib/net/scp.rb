@@ -59,7 +59,7 @@ module Net
   # To receive progress reports for the current operation, just pass a block
   # to #upload or #download (or one of their variants):
   #
-  #   scp.upload!("/path/to/local", "/path/to/remote") do |name, sent, total|
+  #   scp.upload!("/path/to/local", "/path/to/remote") do |ch, name, sent, total|
   #     puts "#{name}: #{sent}/#{total}"
   #   end
   #
