@@ -1,4 +1,4 @@
-=== *unreleased*
+=== 1.0.0 / 1 May 2008
 
 * Pass the channel object as the first argument to the progress callback [Jamis Buck]
 

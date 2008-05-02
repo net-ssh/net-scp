@@ -4,8 +4,8 @@ module Net; class SCP
 
   # Describes the current version of the Net::SCP library.
   class Version < Net::SSH::Version
-    MAJOR = 0
-    MINOR = 99
+    MAJOR = 1
+    MINOR = 0
     TINY  = 0
 
     # The current version, as a Version instance
