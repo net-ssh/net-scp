@@ -67,7 +67,7 @@ class Net::SCP::TestCase < Test::Unit::TestCase
       end
 
       def stub!
-        stat = Mocha::Mock.new(false, "file::stat")
+        stat = Mocha::Mock.new("file::stat")
         stat.stubs(:size => contents.length, :mode => mode, :mtime => mtime, :atime => atime, :directory? => false)
 
         File.stubs(:stat).with(path).returns(stat)
@@ -107,7 +107,7 @@ class Net::SCP::TestCase < Test::Unit::TestCase
       def stub!
         Dir.stubs(:mkdir).with { |*a| a.first == path }
 
-        stat = Mocha::Mock.new(false, "file::stat")
+        stat = Mocha::Mock.new("file::stat")
         stat.stubs(:size => 1024, :mode => mode, :mtime => mtime, :atime => atime, :directory? => true)
 
         File.stubs(:stat).with(path).returns(stat)
