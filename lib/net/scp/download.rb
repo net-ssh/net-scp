@@ -138,7 +138,7 @@ module Net; class SCP
 
       channel[:file] = directive.merge(:times => channel[:times])
       channel[:io] = channel[:local].respond_to?(:write) ? channel[:local] :
-        File.new(directive[:name], File::CREAT|File::TRUNC|File::RDWR, directive[:mode] | 0600)
+        File.new(directive[:name], "wb", directive[:mode] | 0600)
       channel[:times] = nil
       channel[:remaining] = channel[:file][:size]
       channel[:state] = :read_data

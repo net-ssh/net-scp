@@ -76,7 +76,7 @@ class Net::SCP::TestCase < Test::Unit::TestCase
         File.stubs(:open).with(path, "rb").returns(StringIO.new(contents))
 
         @io = StringIO.new
-        File.stubs(:new).with(path, File::CREAT|File::TRUNC|File::RDWR, mode).returns(io)
+        File.stubs(:new).with(path, "wb", mode).returns(io)
       end
     end
 

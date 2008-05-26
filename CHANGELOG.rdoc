@@ -1,3 +1,8 @@
+=== *unreleased*
+
+* Make sure downloads open the file in binary mode to appease Windows [Jamis Buck]
+
+
 === 1.0.0 / 1 May 2008
 
 * Pass the channel object as the first argument to the progress callback [Jamis Buck]
