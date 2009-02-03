@@ -1,3 +1,8 @@
+=== (unreleased)
+
+* Escape spaces in file names on remote server [Jamis Buck]
+
+
 === 1.0.1 / 29 May 2008
 
 * Make sure downloads open the file in binary mode to appease Windows [Jamis Buck]

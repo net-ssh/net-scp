@@ -337,7 +337,7 @@ module Net
       # (See Net::SCP::Upload and Net::SCP::Download).
       def start_command(mode, local, remote, options={}, &callback)
         session.open_channel do |channel|
-          command = "#{scp_command(mode, options)} #{remote}"
+          command = "#{scp_command(mode, options)} #{sanitize_file_name(remote)}"
           channel.exec(command) do |ch, success|
             if success
               channel[:local   ] = local
@@ -397,6 +397,10 @@ module Net
       # set, this does nothing.
       def progress_callback(channel, name, sent, total)
         channel[:callback].call(channel, name, sent, total) if channel[:callback]
+      end
+
+      def sanitize_file_name(file_name)
+        file_name.gsub(/[ ]/) { |m| "\\#{m}" }
       end
   end
 end

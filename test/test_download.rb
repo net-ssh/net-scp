@@ -12,6 +12,20 @@ class TestDownload < Net::SCP::TestCase
     assert_equal "a" * 1234, file.io.string
   end
 
+  def test_download_file_with_spaces_in_name_should_escape_remote_file_name
+    file = prepare_file("/path/to/local file.txt", "")
+
+    expect_scp_session "-f /path/to/remote\\ file.txt" do |channel|
+      channel.sends_ok
+      channel.gets_data "C0666 0 local file.txt\n"
+      channel.sends_ok
+      channel.gets_ok
+      channel.sends_ok
+    end
+
+    assert_scripted { scp.download!("/path/to/remote file.txt", "/path/to/local file.txt") }
+  end
+
   def test_download_with_preserve_should_send_times
     file = prepare_file("/path/to/local.txt", "a" * 1234, 0644, Time.at(1234567890, 123456), Time.at(12121212, 232323))
 
