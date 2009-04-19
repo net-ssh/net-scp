@@ -10,7 +10,7 @@ module Net; class SCP
 
     # The default read chunk size, if an explicit chunk-size is not specified
     # by the client.
-    DEFAULT_CHUNK_SIZE = 2048
+    DEFAULT_CHUNK_SIZE = 16384
 
     # The start state for uploads. Simply sets up the upload scaffolding,
     # sets the current item to upload, and jumps to #upload_current_state.
