@@ -1,0 +1,527 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+
+	<title>Module: Net::SCP::Download</title>
+
+	<link rel="stylesheet" href="../../rdoc.css" type="text/css" media="screen" />
+
+	<script src="../../js/jquery.js" type="text/javascript"
+		charset="utf-8"></script>
+	<script src="../../js/thickbox-compressed.js" type="text/javascript"
+		charset="utf-8"></script>
+	<script src="../../js/quicksearch.js" type="text/javascript"
+		charset="utf-8"></script>
+	<script src="../../js/darkfish.js" type="text/javascript"
+		charset="utf-8"></script>
+
+</head>
+<body class="module">
+
+	<div id="metadata">
+		<div id="file-metadata">
+			<div id="file-list-section" class="section">
+				<h3 class="section-header">In Files</h3>
+				<div class="section-body">
+					<ul>
+					
+						<li><a href="../../lib/net/scp/download_rb.html?TB_iframe=true&amp;height=550&amp;width=785"
+							class="thickbox" title="lib/net/scp/download.rb">lib/net/scp/download.rb</a></li>
+					
+					</ul>
+				</div>
+			</div>
+
+			
+		</div>
+
+		<div id="class-metadata">
+
+			<!-- Parent Class -->
+			
+
+			<!-- Namespace Contents -->
+			
+
+			<!-- Method Quickref -->
+			
+			<div id="method-list-section" class="section">
+				<h3 class="section-header">Methods</h3>
+				<ul class="link-list">
+					
+					<li><a href="#M000000">#download_start_state</a></li>
+					
+					<li><a href="#M000005">#finish_read_state</a></li>
+					
+					<li><a href="#M000008">#parse_directive</a></li>
+					
+					<li><a href="#M000002">#read_data_state</a></li>
+					
+					<li><a href="#M000001">#read_directive_state</a></li>
+					
+					<li><a href="#M000010">#read_directory</a></li>
+					
+					<li><a href="#M000012">#read_file</a></li>
+					
+				</ul>
+			</div>
+			
+
+			<!-- Included Modules -->
+			
+		</div>
+
+		<div id="project-metadata">
+			
+			
+			<div id="fileindex-section" class="section project-section">
+				<h3 class="section-header">Files</h3>
+				<ul>
+				
+					<li class="file"><a href="../../CHANGELOG_rdoc.html">CHANGELOG.rdoc</a></li>
+				
+					<li class="file"><a href="../../README_rdoc.html">README.rdoc</a></li>
+				
+				</ul>
+			</div>
+			
+
+			<div id="classindex-section" class="section project-section">
+				<h3 class="section-header">Class Index
+					<span class="search-toggle"><img src="../../images/find.png"
+						height="16" width="16" alt="[+]"
+						title="show/hide quicksearch" /></span></h3>
+				<form action="#" method="get" accept-charset="utf-8" class="initially-hidden">
+				<fieldset>
+					<legend>Quicksearch</legend>
+					<input type="text" name="quicksearch" value=""
+						class="quicksearch-field" />
+				</fieldset>
+				</form>
+
+				<ul class="link-list">
+				
+					<li><a href="../../Net.html">Net</a></li>
+				
+					<li><a href="../../Net/SCP.html">Net::SCP</a></li>
+				
+					<li><a href="../../Net/SCP/Download.html">Net::SCP::Download</a></li>
+				
+					<li><a href="../../Net/SCP/Error.html">Net::SCP::Error</a></li>
+				
+					<li><a href="../../Net/SCP/Upload.html">Net::SCP::Upload</a></li>
+				
+					<li><a href="../../Net/SCP/Version.html">Net::SCP::Version</a></li>
+				
+					<li><a href="../../Net/SSH.html">Net::SSH</a></li>
+				
+					<li><a href="../../Net/SSH/Connection.html">Net::SSH::Connection</a></li>
+				
+					<li><a href="../../Net/SSH/Connection/Session.html">Net::SSH::Connection::Session</a></li>
+				
+					<li><a href="../../URI.html">URI</a></li>
+				
+					<li><a href="../../URI/SCP.html">URI::SCP</a></li>
+				
+				</ul>
+				<div id="no-class-search-results" style="display: none;">No matching classes.</div>
+			</div>
+
+			
+		</div>
+	</div>
+
+	<div id="documentation">
+		<h1 class="module">Net::SCP::Download</h1>
+
+		<div id="description">
+			<p>
+This module implements the state machine for downloading information from a
+remote server. It exposes no public methods. See <a
+href="../SCP.html#M000022">Net::SCP#download</a> for a discussion of how to
+use <a href="../SCP.html">Net::SCP</a> to download data.
+</p>
+
+		</div>
+
+		<!-- Constants -->
+		
+
+		<!-- Attributes -->
+		
+
+		<!-- Methods -->
+		
+		<div id="private-instance-method-details" class="method-section section">
+			<h3 class="section-header">Private Instance Methods</h3>
+
+		
+			<div id="download-start-state-method" class="method-detail ">
+				<a name="M000000"></a>
+
+				<div class="method-heading">
+				
+					<span class="method-name">download_start_state</span><span
+						class="method-args">(channel)</span>
+					<span class="method-click-advice">click to toggle source</span>
+				
+				</div>
+
+				<div class="method-description">
+					
+					<p>
+This is the starting state for the download state machine. The
+start_command method puts the state machine into this state the first time
+the channel is processed. This state does some basic error checking and
+scaffolding and then sends a 0-byte to the remote server, indicating
+readiness to proceed. Then, the state machine is placed into the
+&#8220;read directive&#8221; state (see <a
+href="Download.html#M000001">read_directive_state</a>).
+</p>
+					
+
+					
+					<div class="method-source-code"
+						id="download-start-state-source">
+<pre>
+    <span class="ruby-comment cmt"># File lib/net/scp/download.rb, line 17</span>
+17:     <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">download_start_state</span>(<span class="ruby-identifier">channel</span>)
+18:       <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>].<span class="ruby-identifier">respond_to?</span>(<span class="ruby-identifier">:write</span>) <span class="ruby-operator">&amp;&amp;</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:options</span>][<span class="ruby-identifier">:recursive</span>]
+19:         <span class="ruby-identifier">raise</span> <span class="ruby-constant">Net</span><span class="ruby-operator">::</span><span class="ruby-constant">SCP</span><span class="ruby-operator">::</span><span class="ruby-constant">Error</span>, <span class="ruby-value str">&quot;cannot recursively download to an in-memory location&quot;</span>
+20:       <span class="ruby-keyword kw">elsif</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>].<span class="ruby-identifier">respond_to?</span>(<span class="ruby-identifier">:write</span>) <span class="ruby-operator">&amp;&amp;</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:options</span>][<span class="ruby-identifier">:preserve</span>]
+21:         <span class="ruby-identifier">lwarn</span> { <span class="ruby-value str">&quot;:preserve option is ignored when downloading to an in-memory buffer&quot;</span> }
+22:         <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:options</span>].<span class="ruby-identifier">delete</span>(<span class="ruby-identifier">:preserve</span>)
+23:       <span class="ruby-keyword kw">elsif</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:options</span>][<span class="ruby-identifier">:recursive</span>] <span class="ruby-operator">&amp;&amp;</span> <span class="ruby-operator">!</span><span class="ruby-constant">File</span>.<span class="ruby-identifier">exists?</span>(<span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>])
+24:         <span class="ruby-constant">Dir</span>.<span class="ruby-identifier">mkdir</span>(<span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>])
+25:       <span class="ruby-keyword kw">end</span>
+26: 
+27:       <span class="ruby-identifier">channel</span>.<span class="ruby-identifier">send_data</span>(<span class="ruby-value str">&quot;\0&quot;</span>)
+28:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:state</span>] = <span class="ruby-identifier">:read_directive</span>
+29:     <span class="ruby-keyword kw">end</span></pre>
+					</div>
+					
+				</div>
+
+				
+			</div>
+
+		
+			<div id="finish-read-state-method" class="method-detail ">
+				<a name="M000005"></a>
+
+				<div class="method-heading">
+				
+					<span class="method-name">finish_read_state</span><span
+						class="method-args">(channel)</span>
+					<span class="method-click-advice">click to toggle source</span>
+				
+				</div>
+
+				<div class="method-description">
+					
+					<p>
+Finishes off the read, sets the times for the file (if any), and then jumps
+to either finish_state (for single-file downloads) or <a
+href="Download.html#M000001">read_directive_state</a> (for recursive
+downloads). A 0-byte is sent to the server to indicate that the file was
+recieved successfully.
+</p>
+					
+
+					
+					<div class="method-source-code"
+						id="finish-read-state-source">
+<pre>
+    <span class="ruby-comment cmt"># File lib/net/scp/download.rb, line 71</span>
+71:     <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">finish_read_state</span>(<span class="ruby-identifier">channel</span>)
+72:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:io</span>].<span class="ruby-identifier">close</span> <span class="ruby-keyword kw">unless</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:io</span>] <span class="ruby-operator">==</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>]
+73: 
+74:       <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:options</span>][<span class="ruby-identifier">:preserve</span>] <span class="ruby-operator">&amp;&amp;</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:file</span>][<span class="ruby-identifier">:times</span>]
+75:         <span class="ruby-constant">File</span>.<span class="ruby-identifier">utime</span>(<span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:file</span>][<span class="ruby-identifier">:times</span>][<span class="ruby-identifier">:atime</span>],
+76:           <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:file</span>][<span class="ruby-identifier">:times</span>][<span class="ruby-identifier">:mtime</span>], <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:file</span>][<span class="ruby-identifier">:name</span>])
+77:       <span class="ruby-keyword kw">end</span>
+78: 
+79:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:file</span>] = <span class="ruby-keyword kw">nil</span>
+80:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:state</span>] = <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:stack</span>].<span class="ruby-identifier">empty?</span> <span class="ruby-value">? </span><span class="ruby-operator">:</span><span class="ruby-identifier">finish</span> <span class="ruby-operator">:</span> <span class="ruby-identifier">:read_directive</span>
+81:       <span class="ruby-identifier">channel</span>.<span class="ruby-identifier">send_data</span>(<span class="ruby-value str">&quot;\0&quot;</span>)
+82:     <span class="ruby-keyword kw">end</span></pre>
+					</div>
+					
+				</div>
+
+				
+			</div>
+
+		
+			<div id="parse-directive-method" class="method-detail ">
+				<a name="M000008"></a>
+
+				<div class="method-heading">
+				
+					<span class="method-name">parse_directive</span><span
+						class="method-args">(text)</span>
+					<span class="method-click-advice">click to toggle source</span>
+				
+				</div>
+
+				<div class="method-description">
+					
+					<p>
+Parses the given <tt>text</tt> to extract which <a
+href="../SCP.html">SCP</a> directive it contains. It then returns a hash
+with at least one key, :type, which describes what type of directive it is.
+The hash may also contain other, directive-specific data.
+</p>
+					
+
+					
+					<div class="method-source-code"
+						id="parse-directive-source">
+<pre>
+     <span class="ruby-comment cmt"># File lib/net/scp/download.rb, line 88</span>
+ 88:     <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">parse_directive</span>(<span class="ruby-identifier">text</span>)
+ 89:       <span class="ruby-keyword kw">case</span> <span class="ruby-identifier">type</span> = <span class="ruby-identifier">text</span>[<span class="ruby-value">0</span>]
+ 90:       <span class="ruby-keyword kw">when</span> <span class="ruby-value">?T</span>
+ 91:         <span class="ruby-identifier">parts</span> = <span class="ruby-identifier">text</span>[<span class="ruby-value">1</span><span class="ruby-operator">..</span><span class="ruby-value">-1</span>].<span class="ruby-identifier">split</span>(<span class="ruby-regexp re">/ /</span>, <span class="ruby-value">4</span>).<span class="ruby-identifier">map</span> { <span class="ruby-operator">|</span><span class="ruby-identifier">i</span><span class="ruby-operator">|</span> <span class="ruby-identifier">i</span>.<span class="ruby-identifier">to_i</span> }
+ 92:         { <span class="ruby-identifier">:type</span>  =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">:times</span>,
+ 93:           <span class="ruby-identifier">:mtime</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-constant">Time</span>.<span class="ruby-identifier">at</span>(<span class="ruby-identifier">parts</span>[<span class="ruby-value">0</span>], <span class="ruby-identifier">parts</span>[<span class="ruby-value">1</span>]),
+ 94:           <span class="ruby-identifier">:atime</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-constant">Time</span>.<span class="ruby-identifier">at</span>(<span class="ruby-identifier">parts</span>[<span class="ruby-value">2</span>], <span class="ruby-identifier">parts</span>[<span class="ruby-value">3</span>]) }
+ 95:       <span class="ruby-keyword kw">when</span> <span class="ruby-value">?C</span>, <span class="ruby-value">?D</span>
+ 96:         <span class="ruby-identifier">parts</span> = <span class="ruby-identifier">text</span>[<span class="ruby-value">1</span><span class="ruby-operator">..</span><span class="ruby-value">-1</span>].<span class="ruby-identifier">split</span>(<span class="ruby-regexp re">/ /</span>, <span class="ruby-value">3</span>)
+ 97:         { <span class="ruby-identifier">:type</span> =<span class="ruby-operator">&gt;</span> (<span class="ruby-identifier">type</span> <span class="ruby-operator">==</span> <span class="ruby-value">?C</span> <span class="ruby-operator">?</span> <span class="ruby-identifier">:file</span> <span class="ruby-operator">:</span> <span class="ruby-identifier">:directory</span>),
+ 98:           <span class="ruby-identifier">:mode</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">parts</span>[<span class="ruby-value">0</span>].<span class="ruby-identifier">to_i</span>(<span class="ruby-value">8</span>),
+ 99:           <span class="ruby-identifier">:size</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">parts</span>[<span class="ruby-value">1</span>].<span class="ruby-identifier">to_i</span>,
+100:           <span class="ruby-identifier">:name</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">parts</span>[<span class="ruby-value">2</span>].<span class="ruby-identifier">chomp</span> }
+101:       <span class="ruby-keyword kw">when</span> <span class="ruby-value">?E</span>
+102:         { <span class="ruby-identifier">:type</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">:end</span> }
+103:       <span class="ruby-keyword kw">else</span> <span class="ruby-identifier">raise</span> <span class="ruby-constant">ArgumentError</span>, <span class="ruby-node">&quot;unknown directive: #{text.inspect}&quot;</span>
+104:       <span class="ruby-keyword kw">end</span>
+105:     <span class="ruby-keyword kw">end</span></pre>
+					</div>
+					
+				</div>
+
+				
+			</div>
+
+		
+			<div id="read-data-state-method" class="method-detail ">
+				<a name="M000002"></a>
+
+				<div class="method-heading">
+				
+					<span class="method-name">read_data_state</span><span
+						class="method-args">(channel)</span>
+					<span class="method-click-advice">click to toggle source</span>
+				
+				</div>
+
+				<div class="method-description">
+					
+					<p>
+Reads data from the channel for as long as there is data remaining to be
+read. As soon as there is no more data to read for the current file, the
+state machine switches to <a
+href="Download.html#M000005">finish_read_state</a>.
+</p>
+					
+
+					
+					<div class="method-source-code"
+						id="read-data-state-source">
+<pre>
+    <span class="ruby-comment cmt"># File lib/net/scp/download.rb, line 58</span>
+58:     <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">read_data_state</span>(<span class="ruby-identifier">channel</span>)
+59:       <span class="ruby-keyword kw">return</span> <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:buffer</span>].<span class="ruby-identifier">empty?</span>
+60:       <span class="ruby-identifier">data</span> = <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:buffer</span>].<span class="ruby-identifier">read!</span>(<span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:remaining</span>])
+61:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:io</span>].<span class="ruby-identifier">write</span>(<span class="ruby-identifier">data</span>)
+62:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:remaining</span>] <span class="ruby-operator">-=</span> <span class="ruby-identifier">data</span>.<span class="ruby-identifier">length</span>
+63:       <span class="ruby-identifier">progress_callback</span>(<span class="ruby-identifier">channel</span>, <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:file</span>][<span class="ruby-identifier">:name</span>], <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:file</span>][<span class="ruby-identifier">:size</span>] <span class="ruby-operator">-</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:remaining</span>], <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:file</span>][<span class="ruby-identifier">:size</span>])
+64:       <span class="ruby-identifier">await_response</span>(<span class="ruby-identifier">channel</span>, <span class="ruby-identifier">:finish_read</span>) <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:remaining</span>] <span class="ruby-operator">&lt;=</span> <span class="ruby-value">0</span>
+65:     <span class="ruby-keyword kw">end</span></pre>
+					</div>
+					
+				</div>
+
+				
+			</div>
+
+		
+			<div id="read-directive-state-method" class="method-detail ">
+				<a name="M000001"></a>
+
+				<div class="method-heading">
+				
+					<span class="method-name">read_directive_state</span><span
+						class="method-args">(channel)</span>
+					<span class="method-click-advice">click to toggle source</span>
+				
+				</div>
+
+				<div class="method-description">
+					
+					<p>
+This state parses the next full line (up to a new-line) for the next
+directive. (See the <a href="../SCP.html">SCP</a> protocol documentation in
+<a href="../SCP.html">Net::SCP</a> for the possible directives).
+</p>
+					
+
+					
+					<div class="method-source-code"
+						id="read-directive-state-source">
+<pre>
+    <span class="ruby-comment cmt"># File lib/net/scp/download.rb, line 34</span>
+34:     <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">read_directive_state</span>(<span class="ruby-identifier">channel</span>)
+35:       <span class="ruby-keyword kw">return</span> <span class="ruby-keyword kw">unless</span> <span class="ruby-identifier">line</span> = <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:buffer</span>].<span class="ruby-identifier">read_to</span>(<span class="ruby-value str">&quot;\n&quot;</span>)
+36:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:buffer</span>].<span class="ruby-identifier">consume!</span>
+37: 
+38:       <span class="ruby-identifier">directive</span> = <span class="ruby-identifier">parse_directive</span>(<span class="ruby-identifier">line</span>)
+39:       <span class="ruby-keyword kw">case</span> <span class="ruby-identifier">directive</span>[<span class="ruby-identifier">:type</span>]
+40:       <span class="ruby-keyword kw">when</span> <span class="ruby-identifier">:times</span> <span class="ruby-keyword kw">then</span>
+41:         <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:times</span>] = <span class="ruby-identifier">directive</span>
+42:       <span class="ruby-keyword kw">when</span> <span class="ruby-identifier">:directory</span>
+43:         <span class="ruby-identifier">read_directory</span>(<span class="ruby-identifier">channel</span>, <span class="ruby-identifier">directive</span>)
+44:       <span class="ruby-keyword kw">when</span> <span class="ruby-identifier">:file</span>
+45:         <span class="ruby-identifier">read_file</span>(<span class="ruby-identifier">channel</span>, <span class="ruby-identifier">directive</span>)
+46:       <span class="ruby-keyword kw">when</span> <span class="ruby-identifier">:end</span>
+47:         <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>] = <span class="ruby-constant">File</span>.<span class="ruby-identifier">dirname</span>(<span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>])
+48:         <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:stack</span>].<span class="ruby-identifier">pop</span>
+49:         <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:state</span>] = <span class="ruby-identifier">:finish</span> <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:stack</span>].<span class="ruby-identifier">empty?</span>
+50:       <span class="ruby-keyword kw">end</span>
+51: 
+52:       <span class="ruby-identifier">channel</span>.<span class="ruby-identifier">send_data</span>(<span class="ruby-value str">&quot;\0&quot;</span>)
+53:     <span class="ruby-keyword kw">end</span></pre>
+					</div>
+					
+				</div>
+
+				
+			</div>
+
+		
+			<div id="read-directory-method" class="method-detail ">
+				<a name="M000010"></a>
+
+				<div class="method-heading">
+				
+					<span class="method-name">read_directory</span><span
+						class="method-args">(channel, directive)</span>
+					<span class="method-click-advice">click to toggle source</span>
+				
+				</div>
+
+				<div class="method-description">
+					
+					<p>
+Sets the new directory as the current directory, creates the directory if
+it does not exist, and then falls back into <a
+href="Download.html#M000001">read_directive_state</a>.
+</p>
+					
+
+					
+					<div class="method-source-code"
+						id="read-directory-source">
+<pre>
+     <span class="ruby-comment cmt"># File lib/net/scp/download.rb, line 109</span>
+109:     <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">read_directory</span>(<span class="ruby-identifier">channel</span>, <span class="ruby-identifier">directive</span>)
+110:       <span class="ruby-keyword kw">if</span> <span class="ruby-operator">!</span><span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:options</span>][<span class="ruby-identifier">:recursive</span>]
+111:         <span class="ruby-identifier">raise</span> <span class="ruby-constant">Net</span><span class="ruby-operator">::</span><span class="ruby-constant">SCP</span><span class="ruby-operator">::</span><span class="ruby-constant">Error</span>, <span class="ruby-value str">&quot;:recursive not specified for directory download&quot;</span>
+112:       <span class="ruby-keyword kw">end</span>
+113: 
+114:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>] = <span class="ruby-constant">File</span>.<span class="ruby-identifier">join</span>(<span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>], <span class="ruby-identifier">directive</span>[<span class="ruby-identifier">:name</span>])
+115: 
+116:       <span class="ruby-keyword kw">if</span> <span class="ruby-constant">File</span>.<span class="ruby-identifier">exists?</span>(<span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>]) <span class="ruby-operator">&amp;&amp;</span> <span class="ruby-operator">!</span><span class="ruby-constant">File</span>.<span class="ruby-identifier">directory?</span>(<span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>])
+117:         <span class="ruby-identifier">raise</span> <span class="ruby-node">&quot;#{channel[:local]} already exists and is not a directory&quot;</span>
+118:       <span class="ruby-keyword kw">elsif</span> <span class="ruby-operator">!</span><span class="ruby-constant">File</span>.<span class="ruby-identifier">exists?</span>(<span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>])
+119:         <span class="ruby-constant">Dir</span>.<span class="ruby-identifier">mkdir</span>(<span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>], <span class="ruby-identifier">directive</span>[<span class="ruby-identifier">:mode</span>] <span class="ruby-operator">|</span> <span class="ruby-value">0700</span>)
+120:       <span class="ruby-keyword kw">end</span>
+121: 
+122:       <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:options</span>][<span class="ruby-identifier">:preserve</span>] <span class="ruby-operator">&amp;&amp;</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:times</span>]
+123:         <span class="ruby-constant">File</span>.<span class="ruby-identifier">utime</span>(<span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:times</span>][<span class="ruby-identifier">:atime</span>], <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:times</span>][<span class="ruby-identifier">:mtime</span>], <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>])
+124:       <span class="ruby-keyword kw">end</span>
+125: 
+126:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:stack</span>] <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-identifier">directive</span>
+127:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:times</span>] = <span class="ruby-keyword kw">nil</span>
+128:     <span class="ruby-keyword kw">end</span></pre>
+					</div>
+					
+				</div>
+
+				
+			</div>
+
+		
+			<div id="read-file-method" class="method-detail ">
+				<a name="M000012"></a>
+
+				<div class="method-heading">
+				
+					<span class="method-name">read_file</span><span
+						class="method-args">(channel, directive)</span>
+					<span class="method-click-advice">click to toggle source</span>
+				
+				</div>
+
+				<div class="method-description">
+					
+					<p>
+Opens the given file locally, and switches to <a
+href="Download.html#M000002">read_data_state</a> to do the actual read.
+</p>
+					
+
+					
+					<div class="method-source-code"
+						id="read-file-source">
+<pre>
+     <span class="ruby-comment cmt"># File lib/net/scp/download.rb, line 132</span>
+132:     <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">read_file</span>(<span class="ruby-identifier">channel</span>, <span class="ruby-identifier">directive</span>)
+133:       <span class="ruby-keyword kw">if</span> <span class="ruby-operator">!</span><span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>].<span class="ruby-identifier">respond_to?</span>(<span class="ruby-identifier">:write</span>)
+134:         <span class="ruby-identifier">directive</span>[<span class="ruby-identifier">:name</span>] = (<span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:options</span>][<span class="ruby-identifier">:recursive</span>] <span class="ruby-operator">||</span> <span class="ruby-constant">File</span>.<span class="ruby-identifier">directory?</span>(<span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>])) <span class="ruby-operator">?</span>
+135:           <span class="ruby-constant">File</span>.<span class="ruby-identifier">join</span>(<span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>], <span class="ruby-identifier">directive</span>[<span class="ruby-identifier">:name</span>]) <span class="ruby-operator">:</span>
+136:           <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>]
+137:       <span class="ruby-keyword kw">end</span>
+138: 
+139:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:file</span>] = <span class="ruby-identifier">directive</span>.<span class="ruby-identifier">merge</span>(<span class="ruby-identifier">:times</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:times</span>])
+140:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:io</span>] = <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>].<span class="ruby-identifier">respond_to?</span>(<span class="ruby-identifier">:write</span>) <span class="ruby-operator">?</span> <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:local</span>] <span class="ruby-operator">:</span>
+141:         <span class="ruby-constant">File</span>.<span class="ruby-identifier">new</span>(<span class="ruby-identifier">directive</span>[<span class="ruby-identifier">:name</span>], <span class="ruby-value str">&quot;wb&quot;</span>, <span class="ruby-identifier">directive</span>[<span class="ruby-identifier">:mode</span>] <span class="ruby-operator">|</span> <span class="ruby-value">0600</span>)
+142:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:times</span>] = <span class="ruby-keyword kw">nil</span>
+143:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:remaining</span>] = <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:file</span>][<span class="ruby-identifier">:size</span>]
+144:       <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:state</span>] = <span class="ruby-identifier">:read_data</span>
+145: 
+146:       <span class="ruby-identifier">progress_callback</span>(<span class="ruby-identifier">channel</span>, <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:file</span>][<span class="ruby-identifier">:name</span>], <span class="ruby-value">0</span>, <span class="ruby-identifier">channel</span>[<span class="ruby-identifier">:file</span>][<span class="ruby-identifier">:size</span>])
+147:     <span class="ruby-keyword kw">end</span></pre>
+					</div>
+					
+				</div>
+
+				
+			</div>
+
+		
+		</div>
+	
+
+	</div>
+
+
+	<div id="rdoc-debugging-section-dump" class="debugging-section">
+	
+		<p>Disabled; run with --debug to generate this.</p>
+	
+	</div>
+
+	<div id="validator-badges">
+		<p><small><a href="http://validator.w3.org/check/referer">[Validate]</a></small></p>
+		<p><small>Generated with the <a href="http://deveiate.org/projects/Darkfish-Rdoc/">Darkfish
+			Rdoc Generator</a> 1.1.6</small>.</p>
+	</div>
+
+</body>
+</html>
+
