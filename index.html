@@ -1,1 +1,286 @@
-docs
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+
+	<title>Net-scp</title>
+
+	<link type="text/css" media="screen" href="rdoc.css" rel="stylesheet" />
+
+	<script src="js/jquery.js" type="text/javascript" charset="utf-8"></script>
+	<script src="js/thickbox-compressed.js" type="text/javascript" charset="utf-8"></script>
+	<script src="js/quicksearch.js" type="text/javascript" charset="utf-8"></script>
+	<script src="js/darkfish.js" type="text/javascript" charset="utf-8"></script>
+
+</head>
+<body class="indexpage">
+
+	
+	<h1>Net-scp</h1>
+
+	
+	<div id="main">
+		
+<ul>
+<li><a href="http://net-ssh.rubyforge.org/scp">net-ssh.rubyforge.org/scp</a>
+
+</li>
+</ul>
+<h2>DESCRIPTION:</h2>
+<p>
+<a href="Net/SCP.html">Net::SCP</a> is a pure-Ruby implementation of the
+SCP protocol. This operates over SSH (and requires the <a
+href="Net/SSH.html">Net::SSH</a> library), and allows files and directory
+trees to copied to and from a remote server.
+</p>
+<h2>FEATURES/PROBLEMS:</h2>
+<ul>
+<li>Transfer files or entire directory trees to or from a remote host via SCP
+
+</li>
+<li>Can preserve file attributes across transfers
+
+</li>
+<li>Can download files in-memory, or direct-to-disk
+
+</li>
+<li>Support for SCP URI&#8217;s, and OpenURI
+
+</li>
+</ul>
+<h2>SYNOPSIS:</h2>
+<p>
+In a nutshell:
+</p>
+<pre>
+  require 'net/scp'
+
+  # upload a file to a remote server
+  Net::SCP.upload!(&quot;remote.host.com&quot;, &quot;username&quot;,
+    &quot;/local/path&quot;, &quot;/remote/path&quot;,
+    :password =&gt; &quot;password&quot;)
+
+  # download a file from a remote server
+  Net::SCP.download!(&quot;remote.host.com&quot;, &quot;username&quot;,
+    &quot;/remote/path&quot;, &quot;/local/path&quot;,
+    :password =&gt; password)
+
+  # download a file to an in-memory buffer
+  data = Net::SCP::download!(&quot;remote.host.com&quot;, &quot;username&quot;, &quot;/remote/path&quot;)
+
+  # use a persistent connection to transfer files
+  Net::SCP.start(&quot;remote.host.com&quot;, &quot;username&quot;, :password =&gt; &quot;password&quot;) do |scp|
+    # upload a file to a remote server
+    scp.upload! &quot;/local/path&quot;, &quot;/remote/path&quot;
+
+    # upload from an in-memory buffer
+    scp.upload! StringIO.new(&quot;some data to upload&quot;), &quot;/remote/path&quot;
+
+    # run multiple downloads in parallel
+    d1 = scp.download(&quot;/remote/path&quot;, &quot;/local/path&quot;)
+    d2 = scp.download(&quot;/remote/path2&quot;, &quot;/local/path2&quot;)
+    [d1, d2].each { |d| d.wait }
+  end
+
+  # You can also use open-uri to grab data via scp:
+  require 'uri/open-scp'
+  data = open(&quot;scp://user@host/path/to/file.txt&quot;).read
+</pre>
+<p>
+For more information, see <a href="Net/SCP.html">Net::SCP</a>.
+</p>
+<h2>REQUIREMENTS:</h2>
+<ul>
+<li><a href="Net/SSH.html">Net::SSH</a> 2
+
+</li>
+</ul>
+<p>
+If you wish to run the tests, you&#8217;ll also need:
+</p>
+<ul>
+<li>Echoe (for Rakefile use)
+
+</li>
+<li>Mocha (for tests)
+
+</li>
+</ul>
+<h2>INSTALL:</h2>
+<ul>
+<li>gem install net-scp (might need sudo privileges)
+
+</li>
+</ul>
+<p>
+Or, you can do it the hard way (without Rubygems):
+</p>
+<ul>
+<li>tar xzf net-scp-*.tgz
+
+</li>
+<li>cd net-scp-*
+
+</li>
+<li>ruby setup.rb config
+
+</li>
+<li>ruby setup.rb install (might need sudo privileges)
+
+</li>
+</ul>
+<h2>LICENSE:</h2>
+<p>
+(The MIT License)
+</p>
+<p>
+Copyright &#169; 2008 Jamis Buck <jamis@37signals.com>
+</p>
+<p>
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+&#8216;Software&#8217;), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to the
+following conditions:
+</p>
+<p>
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+</p>
+<p>
+THE SOFTWARE IS PROVIDED &#8216;AS IS&#8217;, WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE.
+</p>
+
+	</div>
+	
+
+	
+	
+	<h2>Files</h2>
+	<ul>
+		
+			<li class="file"><a href="CHANGELOG_rdoc.html">CHANGELOG.rdoc</a></li>
+		
+			<li class="file"><a href="README_rdoc.html">README.rdoc</a></li>
+		
+	</ul>
+	
+
+	<h2>Classes/Modules</h2>
+	<ul>
+		
+		<li class="module"><a href="Net.html">Net</a></li>
+		
+		<li class="class"><a href="Net/SCP.html">Net::SCP</a></li>
+		
+		<li class="module"><a href="Net/SCP/Download.html">Net::SCP::Download</a></li>
+		
+		<li class="class"><a href="Net/SCP/Error.html">Net::SCP::Error</a></li>
+		
+		<li class="module"><a href="Net/SCP/Upload.html">Net::SCP::Upload</a></li>
+		
+		<li class="class"><a href="Net/SCP/Version.html">Net::SCP::Version</a></li>
+		
+		<li class="module"><a href="Net/SSH.html">Net::SSH</a></li>
+		
+		<li class="module"><a href="Net/SSH/Connection.html">Net::SSH::Connection</a></li>
+		
+		<li class="class"><a href="Net/SSH/Connection/Session.html">Net::SSH::Connection::Session</a></li>
+		
+		<li class="module"><a href="URI.html">URI</a></li>
+		
+		<li class="class"><a href="URI/SCP.html">URI::SCP</a></li>
+		
+	</ul>
+
+	<h2>Methods</h2>
+	<ul>
+		
+			<li><a href="Net/SCP.html#M000018">::download! &mdash; Net::SCP</a></li>
+		
+			<li><a href="URI/SCP.html#M000024">::new &mdash; URI::SCP</a></li>
+		
+			<li><a href="Net/SCP.html#M000019">::new &mdash; Net::SCP</a></li>
+		
+			<li><a href="URI/SCP.html#M000023">::new2 &mdash; URI::SCP</a></li>
+		
+			<li><a href="Net/SCP.html#M000016">::start &mdash; Net::SCP</a></li>
+		
+			<li><a href="Net/SCP.html#M000017">::upload! &mdash; Net::SCP</a></li>
+		
+			<li><a href="Net/SCP.html#M000028">#await_response &mdash; Net::SCP</a></li>
+		
+			<li><a href="Net/SCP.html#M000029">#await_response_state &mdash; Net::SCP</a></li>
+		
+			<li><a href="URI/SCP.html#M000015">#buffer_open &mdash; URI::SCP</a></li>
+		
+			<li><a href="Net/SCP.html#M000022">#download &mdash; Net::SCP</a></li>
+		
+			<li><a href="Net/SCP.html#M000025">#download! &mdash; Net::SCP</a></li>
+		
+			<li><a href="Net/SCP/Download.html#M000000">#download_start_state &mdash; Net::SCP::Download</a></li>
+		
+			<li><a href="Net/SCP/Download.html#M000005">#finish_read_state &mdash; Net::SCP::Download</a></li>
+		
+			<li><a href="Net/SCP.html#M000030">#finish_state &mdash; Net::SCP</a></li>
+		
+			<li><a href="Net/SCP/Upload.html#M000011">#next_item_state &mdash; Net::SCP::Upload</a></li>
+		
+			<li><a href="Net/SCP/Download.html#M000008">#parse_directive &mdash; Net::SCP::Download</a></li>
+		
+			<li><a href="Net/SCP/Upload.html#M000014">#preserve_attributes_if_requested &mdash; Net::SCP::Upload</a></li>
+		
+			<li><a href="Net/SCP.html#M000031">#progress_callback &mdash; Net::SCP</a></li>
+		
+			<li><a href="Net/SCP/Download.html#M000002">#read_data_state &mdash; Net::SCP::Download</a></li>
+		
+			<li><a href="Net/SCP/Download.html#M000001">#read_directive_state &mdash; Net::SCP::Download</a></li>
+		
+			<li><a href="Net/SCP/Download.html#M000010">#read_directory &mdash; Net::SCP::Download</a></li>
+		
+			<li><a href="Net/SCP/Download.html#M000012">#read_file &mdash; Net::SCP::Download</a></li>
+		
+			<li><a href="Net/SCP.html#M000032">#sanitize_file_name &mdash; Net::SCP</a></li>
+		
+			<li><a href="Net/SSH/Connection/Session.html#M000033">#scp &mdash; Net::SSH::Connection::Session</a></li>
+		
+			<li><a href="Net/SCP.html#M000026">#scp_command &mdash; Net::SCP</a></li>
+		
+			<li><a href="Net/SCP/Upload.html#M000009">#send_data_state &mdash; Net::SCP::Upload</a></li>
+		
+			<li><a href="Net/SCP/Upload.html#M000013">#set_current &mdash; Net::SCP::Upload</a></li>
+		
+			<li><a href="Net/SCP.html#M000027">#start_command &mdash; Net::SCP</a></li>
+		
+			<li><a href="Net/SCP.html#M000020">#upload &mdash; Net::SCP</a></li>
+		
+			<li><a href="Net/SCP.html#M000021">#upload! &mdash; Net::SCP</a></li>
+		
+			<li><a href="Net/SCP/Upload.html#M000004">#upload_current_state &mdash; Net::SCP::Upload</a></li>
+		
+			<li><a href="Net/SCP/Upload.html#M000006">#upload_directory_state &mdash; Net::SCP::Upload</a></li>
+		
+			<li><a href="Net/SCP/Upload.html#M000007">#upload_file_state &mdash; Net::SCP::Upload</a></li>
+		
+			<li><a href="Net/SCP/Upload.html#M000003">#upload_start_state &mdash; Net::SCP::Upload</a></li>
+		
+	</ul>
+
+	<div id="validator-badges">
+		<p><small><a href="http://validator.w3.org/check/referer">[Validate]</a></small></p>
+		<p><small>Generated with the <a href="http://deveiate.org/projects/Darkfish-Rdoc/">Darkfish
+			Rdoc Generator</a> 1.1.6</small>.</p>
+	</div>
+</body>
+</html>
