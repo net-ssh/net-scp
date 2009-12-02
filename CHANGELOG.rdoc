@@ -1,3 +1,8 @@
+=== Unreleased
+
+* Added gemspec file and removed echoe dependency [Miron Cuperman, Delano Mandelbaum]
+
+
 === 1.0.2 / 4 Feb 2009
 
 * Escape spaces in file names on remote server [Jamis Buck]
