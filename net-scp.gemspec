@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 
-Gem::Specification.new do |s|
+@spec = Gem::Specification.new do |s|
   s.name = %q{net-scp}
   s.version = "1.0.2"
 
