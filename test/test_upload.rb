@@ -15,7 +15,21 @@ class TestUpload < Net::SCP::TestCase
 
     assert_scripted { scp.upload!("/path/to/local.txt", "/path/to/remote.txt") }
   end
+  
+  def test_upload_file_with_spaces_in_name_should_escape_remote_file_name
+    prepare_file("/path/to/local file.txt", "")
 
+    expect_scp_session "-t /path/to/remote\\ file.txt" do |channel|
+      channel.gets_ok
+      channel.sends_data "C0666 0 local file.txt\n"
+      channel.gets_ok
+      channel.sends_ok
+      channel.gets_ok
+    end
+
+    assert_scripted { scp.upload!("/path/to/local file.txt", "/path/to/remote file.txt") }
+  end
+  
   def test_upload_file_with_metacharacters_in_name_should_escape_remote_file_name
     prepare_file("/path/to/local/#{awful_file_name}", "")
 
