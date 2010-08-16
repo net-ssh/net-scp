@@ -12,18 +12,18 @@ class TestDownload < Net::SCP::TestCase
     assert_equal "a" * 1234, file.io.string
   end
 
-  def test_download_file_with_spaces_in_name_should_escape_remote_file_name
-    file = prepare_file("/path/to/local file.txt", "")
+  def test_download_file_with_metacharacters_in_name_should_escape_remote_file_name
+    file = prepare_file("/path/to/local/#{awful_file_name}", "")
 
-    expect_scp_session "-f /path/to/remote\\ file.txt" do |channel|
+    expect_scp_session "-f /path/to/remote/#{escaped_file_name}" do |channel|
       channel.sends_ok
-      channel.gets_data "C0666 0 local file.txt\n"
+      channel.gets_data "C0666 0 #{awful_file_name}\n"
       channel.sends_ok
       channel.gets_ok
       channel.sends_ok
     end
 
-    assert_scripted { scp.download!("/path/to/remote file.txt", "/path/to/local file.txt") }
+    assert_scripted { scp.download!("/path/to/remote/#{awful_file_name}", "/path/to/local/#{awful_file_name}") }
   end
 
   def test_download_with_preserve_should_send_times

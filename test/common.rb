@@ -54,6 +54,21 @@ class Net::SCP::TestCase < Test::Unit::TestCase
       directory.stub!
     end
 
+    # The POSIX spec unfortunately allows all characters in file names except
+    # ASCII 0x00(NUL) and 0x2F(/)
+    #
+    # Ideally, we should be testing filenames with newlines, but Mocha doesn't
+    # like this at all, so we leave them out. However, the Shellwords module
+    # handles newlines just fine, so we can be reasonably confident that they
+    # will work in practice
+    def awful_file_name
+      (((0x00..0x7f).to_a - [0x00, 0x0a, 0x2f]).map { |n| n.chr }).join + '.txt'
+    end
+
+    def escaped_file_name
+      "\\\001\\\002\\\003\\\004\\\005\\\006\\\a\\\b\\\t\\\v\\\f\\\r\\\016\\\017\\\020\\\021\\\022\\\023\\\024\\\025\\\026\\\027\\\030\\\031\\\032\\\e\\\034\\\035\\\036\\\037\\ \\!\\\"\\#\\$\\%\\&\\'\\(\\)\\*\\+,-.0123456789:\\;\\<\\=\\>\\?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\\[\\\\\\]\\^_\\`abcdefghijklmnopqrstuvwxyz\\{\\|\\}\\~\\\177.txt"
+    end
+
     class FileEntry
       attr_reader :path, :contents, :mode, :mtime, :atime, :io
 
