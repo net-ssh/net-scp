@@ -17,13 +17,12 @@ task :default => :package
 # Change the following according to your needs
 README = "README.rdoc"
 CHANGES = "CHANGELOG.rdoc"
-THANKS = 'THANKS.rdoc'
 
 # Files and directories to be deleted when you run "rake clean"
 CLEAN.include [ 'pkg', '*.gem', '.config', 'doc']
 
 name = 'net-scp'
-p File.exists?("#{name}.gemspec")
+
 load "#{name}.gemspec"
 version = @spec.version
 
@@ -78,7 +77,6 @@ Rake::RDocTask.new do |t|
 	t.options << '--charset' << 'utf-8'
 	t.rdoc_files.include(README)
 	t.rdoc_files.include(CHANGES)
-	t.rdoc_files.include(THANKS)
 	t.rdoc_files.include('lib/**/*.rb')
 end
 
