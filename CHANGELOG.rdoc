@@ -1,8 +1,8 @@
-=== Unreleased
+=== 1.0.3 / 17 Aug 2010
 
+* replace :sanitize_file_name with a call to String#shellescape [Sung Pae]
 * Added gemspec file and removed echoe dependency [Miron Cuperman, Delano Mandelbaum]
 * Removed Hanna dependency in Rakefile [Delano Mandelbaum]
-
 
 === 1.0.2 / 4 Feb 2009
 
