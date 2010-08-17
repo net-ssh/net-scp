@@ -1,6 +1,6 @@
 = Net::SCP
 
-* http://net-ssh.rubyforge.org/scp
+* http://github.com/net-ssh/net-scp
 
 == DESCRIPTION:
 

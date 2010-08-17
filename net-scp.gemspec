@@ -2,11 +2,11 @@
 
 @spec = Gem::Specification.new do |s|
   s.name = %q{net-scp}
-  s.version = "1.0.2"
+  s.version = "1.0.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 1.2") if s.respond_to? :required_rubygems_version=
-  s.authors = ["Jamis Buck"]
-  s.date = %q{2009-11-30}
+  s.authors = ["Jamis Buck", "Delano Mandelbaum"]
+  s.date = %q{2010-08-17}
   s.description = %q{A pure Ruby implementation of the SCP client protocol}
   s.email = %q{jamis@jamisbuck.org}
   s.extra_rdoc_files = ["CHANGELOG.rdoc", "lib/net/scp/download.rb", "lib/net/scp/errors.rb", "lib/net/scp/upload.rb", "lib/net/scp/version.rb", "lib/net/scp.rb", "lib/uri/open-scp.rb", "lib/uri/scp.rb", "README.rdoc"]
