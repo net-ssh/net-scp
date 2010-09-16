@@ -41,6 +41,7 @@ Rake::GemPackageTask.new(@spec) do |p|
 end
 
 task :release => [ :rdoc, :package ]
+task :build => [ :package ]
 task :install => [ :rdoc, :package ] do
 	sh %{sudo gem install pkg/#{name}-#{version}.gem}
 end
