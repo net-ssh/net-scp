@@ -2,13 +2,13 @@
 
 @spec = Gem::Specification.new do |s|
   s.name = %q{net-scp}
-  s.version = "1.0.3"
+  s.version = "1.0.4"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 1.2") if s.respond_to? :required_rubygems_version=
   s.authors = ["Jamis Buck", "Delano Mandelbaum"]
   s.date = %q{2010-08-17}
   s.description = %q{A pure Ruby implementation of the SCP client protocol}
-  s.email = %q{jamis@jamisbuck.org}
+  s.email = %q{net-scp@solutious.com}
   s.extra_rdoc_files = ["CHANGELOG.rdoc", "lib/net/scp/download.rb", "lib/net/scp/errors.rb", "lib/net/scp/upload.rb", "lib/net/scp/version.rb", "lib/net/scp.rb", "lib/uri/open-scp.rb", "lib/uri/scp.rb", "README.rdoc"]
   s.files = ["CHANGELOG.rdoc", "lib/net/scp/download.rb", "lib/net/scp/errors.rb", "lib/net/scp/upload.rb", "lib/net/scp/version.rb", "lib/net/scp.rb", "lib/uri/open-scp.rb", "lib/uri/scp.rb", "Rakefile", "README.rdoc", "setup.rb", "test/common.rb", "test/test_all.rb", "test/test_download.rb", "test/test_scp.rb", "test/test_upload.rb", "Manifest", "net-scp.gemspec"]
   s.homepage = %q{http://net-ssh.rubyforge.org/scp}

@@ -1,3 +1,7 @@
+=== 1.0.4 / 16 Sep 2010
+
+* maintain filename sanitization compatibility with ruby 1.8.6 [Sung Pae, Tim Charper]
+
 === 1.0.3 / 17 Aug 2010
 
 * replace :sanitize_file_name with a call to String#shellescape [Sung Pae]
