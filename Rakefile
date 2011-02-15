@@ -32,7 +32,10 @@ version = @spec.version
 
 # TESTS/SPECS =========================================================
 
-
+require 'rake/testtask'
+Rake::TestTask.new do |t|
+  t.libs = ["lib", "test"]
+end
 
 # INSTALL =============================================================
 
