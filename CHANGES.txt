@@ -1,5 +1,5 @@
 
-=== 1.0.5 / 06 Feb 2013
+=== 1.1.0 / 06 Feb 2013
 
 * Added public cert. All gem releases are now signed. See INSTALL in readme.
 
