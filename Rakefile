@@ -1,83 +1,55 @@
-require 'rubygems'
-require 'rake/clean'
-require 'rake/gempackagetask'
-require 'fileutils'
-include FileUtils
+require "rubygems"
+require "rake"
+require "rake/clean"
+require "rdoc/task"
+
+task :default => ["build"]
+CLEAN.include [ 'pkg', 'rdoc' ]
+name = "net-scp"
+
+$:.unshift File.join(File.dirname(__FILE__), 'lib')
+require "net/scp/version"
+version = Net::SCP::Version::STRING.dup
 
 begin
-  require 'hanna/rdoctask'
+  require "jeweler"
+  Jeweler::Tasks.new do |s|
+    s.version = version
+    s.name = name
+    s.rubyforge_project = s.name
+    s.summary = "A pure Ruby implementation of the SCP client protocol"
+    s.description = s.summary
+    s.email = "net-ssh@solutious.com"
+    s.homepage = "https://github.com/net-ssh/net-scp"
+    s.authors = ["Jamis Buck", "Delano Mandelbaum"]
+
+    s.add_dependency 'net-ssh', ">=2.6.4"
+
+    s.add_development_dependency 'test-unit'
+    s.add_development_dependency 'mocha'
+
+    s.license = "MIT"
+
+    s.signing_key = File.join('/mnt/gem/', 'gem-private_key.pem')
+    s.cert_chain  = ['gem-public_cert.pem']
+  end
+  Jeweler::GemcutterTasks.new
 rescue LoadError
-  require 'rake/rdoctask'
+  puts "Jeweler (or a dependency) not available. Install it with: sudo gem install jeweler"
 end
 
-task :default => :package
- 
-# CONFIG =============================================================
-
-# Change the following according to your needs
-README = "README.rdoc"
-CHANGES = "CHANGELOG.rdoc"
-
-# Files and directories to be deleted when you run "rake clean"
-CLEAN.include [ 'pkg', '*.gem', '.config', 'doc']
-
-name = 'net-scp'
-
-load "#{name}.gemspec"
-version = @spec.version
-
-# That's it! The following defaults should allow you to get started
-# on other things. 
-
-
-# TESTS/SPECS =========================================================
-
-
-
-# INSTALL =============================================================
-
-Rake::GemPackageTask.new(@spec) do |p|
-  p.need_tar = true if RUBY_PLATFORM !~ /mswin/
+extra_files = %w[LICENSE.txt THANKS.txt CHANGES.txt ]
+RDoc::Task.new do |rdoc|
+  rdoc.rdoc_dir = "rdoc"
+  rdoc.title = "#{name} #{version}"
+  rdoc.generator = 'hanna' # gem install hanna-nouveau
+  rdoc.main = 'README.rdoc'
+  rdoc.rdoc_files.include("README*")
+  rdoc.rdoc_files.include("bin/*.rb")
+  rdoc.rdoc_files.include("lib/**/*.rb")
+  extra_files.each { |file|
+    rdoc.rdoc_files.include(file) if File.exists?(file)
+  }
 end
 
-task :release => [ :rdoc, :package ]
-task :build => [ :package ]
-task :install => [ :rdoc, :package ] do
-	sh %{sudo gem install pkg/#{name}-#{version}.gem}
-end
-task :uninstall => [ :clean ] do
-	sh %{sudo gem uninstall #{name}}
-end
-
-
-# RUBYFORGE RELEASE / PUBLISH TASKS ==================================
-
-if @spec.rubyforge_project
-  desc 'Publish website to rubyforge'
-  task 'publish:rdoc' => 'doc/index.html' do
-    sh "scp -rp doc/* rubyforge.org:/var/www/gforge-projects/#{name}/ssh/v2/api/"
-  end
-
-  desc 'Public release to rubyforge'
-  task 'publish:gem' => [:package] do |t|
-    sh <<-end
-      rubyforge add_release -o Any -a #{CHANGES} -f -n #{README} #{name} #{name} #{@spec.version} pkg/#{name}-#{@spec.version}.gem &&
-      rubyforge add_file -o Any -a #{CHANGES} -f -n #{README} #{name} #{name} #{@spec.version} pkg/#{name}-#{@spec.version}.tgz 
-    end
-  end
-end
-
-
-
-# RUBY DOCS TASK ==================================
-
-Rake::RDocTask.new do |t|
-	t.rdoc_dir = 'doc'
-	t.title    = @spec.summary
-	t.options << '--line-numbers' << '-A cattr_accessor=object'
-	t.options << '--charset' << 'utf-8'
-	t.rdoc_files.include(README)
-	t.rdoc_files.include(CHANGES)
-	t.rdoc_files.include('lib/**/*.rb')
-end
 
