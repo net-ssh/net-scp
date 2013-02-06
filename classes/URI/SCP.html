@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang='en'>
+  <head>
+    <title>URI::SCP</title>
+    <meta content='text/html; charset=US-ASCII' http-equiv='Content-Type'>
+    <link href='../../css/style.css' media='screen' rel='stylesheet' type='text/css'>
+    <script type='text/javascript'>
+      //<![CDATA[
+        function popupCode(url) {
+          window.open(url, "Code", "resizable=yes,scrollbars=yes,toolbar=no,status=no,height=150,width=400")
+        }
+        
+        function toggleCode(id) {
+          var code = document.getElementById(id)
+        
+          code.style.display = code.style.display != 'block' ? 'block' : 'none'
+          return true
+        }
+        
+        // Make codeblocks hidden by default
+        document.writeln('<' + 'style type="text/css">.method .source pre { display: none }<\/style>')
+      //]]>
+    </script>
+  </head>
+  <body class='page'>
+    <div class='class' id='wrapper'>
+      <div class='header'>
+        <h1 class='name'>
+          <span class='type'>class</span>
+          URI::SCP
+        </h1>
+        <ol class='paths'>
+          <li>
+            <a target="docwin" href="../../files/lib/uri/open-scp_rb.html">lib/uri/open-scp.rb</a>
+          </li>
+          <li class='other'>
+            <a target="docwin" href="../../files/lib/uri/scp_rb.html">lib/uri/scp.rb</a>
+          </li>
+          <li>
+            <a class='show' href='#' onclick='this.parentNode.parentNode.className += " expanded"; this.parentNode.removeChild(this); return false'>show all</a>
+          </li>
+        </ol>
+        <div class='parent'>
+          Parent:
+          <strong><a target="docwin" href="../URI.html">URI</a></strong>
+        </div>
+      </div>
+      <div id='content'>
+        <div id='text'>
+          <div id='description'></div>
+          <div id='method-list'>
+            <h2>Methods</h2>
+            <h3>Public Class</h3>
+            <ol>
+              <li><a target="docwin" href="#method-c-new">new</a></li>
+              <li><a target="docwin" href="#method-c-new2">new2</a></li>
+            </ol>
+            <h3>Public Instance</h3>
+            <ol>
+              <li><a target="docwin" href="#method-i-buffer_open">buffer_open</a></li>
+              <li><a target="docwin" href="#attribute-i-options">options</a></li>
+            </ol>
+          </div>
+          <div id='context'>
+            <div id='includes'>
+              <h2>Included modules</h2>
+              <ol>
+                <li>OpenURI::OpenRead</li>
+              </ol>
+            </div>
+          </div>
+          <div id='section'>
+            <div id='constants-list'>
+              <h2>Constants</h2>
+              <div class='name-list'>
+                <table summary='Constants'>
+                  <tr class='top-aligned-row context-row'>
+                    <td class='context-item-name'>COMPONENT</td>
+                    <td>=</td>
+                    <td class='context-item-value'>
+                      [
+                      :scheme,
+                      :userinfo,
+                      :host, :port, :path,
+                      :query  
+                      ].freeze
+                    </td>
+                    <td>&nbsp;</td>
+                    <td class='context-item-desc'></td>
+                  </tr>
+                  <tr class='top-aligned-row context-row'>
+                    <td class='context-item-name'>DEFAULT_PORT</td>
+                    <td>=</td>
+                    <td class='context-item-value'>22</td>
+                    <td>&nbsp;</td>
+                    <td class='context-item-desc'></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            <div id='attribute-list'>
+              <h2 class='section-bar'>Attributes</h2>
+              <div class='name-list'>
+                <table>
+                  <tr class='top-aligned-row context-row'>
+                    <td class='context-item-name'>
+                      <a name='attribute-i-options'>options</a>
+                    </td>
+                    <td class='context-item-value'>[R]</td>
+                    <td class='context-item-desc'></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            <div id='methods'>
+              <h2>Public Class methods</h2>
+              <div class='method public-class' id='method-method-c-new'>
+                <a name='method-c-new'></a>
+                <div class='synopsis'>
+                  <span class='name'>new</span>
+                  <span class='arguments'>(*args)</span>
+                </div>
+                <div class='description'>
+                  
+                </div>
+                <div class='source'>
+                  <a class='source-toggle' href='#' onclick="toggleCode('method-c-new-source'); return false">
+                    [show source]
+                  </a>
+                  <pre id='method-c-new-source'><span class="ruby-comment"># File lib/uri/scp.rb, line 20</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-identifier">initialize</span>(*<span class="ruby-identifier">args</span>)&#x000A;  <span class="ruby-keyword">super</span>(*<span class="ruby-identifier">args</span>)&#x000A;&#x000A;  <span class="ruby-ivar">@options</span> = <span class="ruby-constant">Hash</span>.<span class="ruby-identifier">new</span>&#x000A;  (<span class="ruby-identifier">query</span> <span class="ruby-operator">||</span> <span class="ruby-string">&quot;&quot;</span>).<span class="ruby-identifier">split</span>(<span class="ruby-regexp">%r&amp;/</span>).<span class="ruby-identifier">each</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">pair</span><span class="ruby-operator">|</span>&#x000A;    <span class="ruby-identifier">name</span>, <span class="ruby-identifier">value</span> = <span class="ruby-identifier">pair</span>.<span class="ruby-identifier">split</span>(<span class="ruby-regexp">%r=/</span>, <span class="ruby-value">2</span>)&#x000A;    <span class="ruby-identifier">opt_name</span> = <span class="ruby-identifier">name</span>.<span class="ruby-identifier">to_sym</span>&#x000A;    <span class="ruby-identifier">values</span> = <span class="ruby-identifier">value</span>.<span class="ruby-identifier">split</span>(<span class="ruby-regexp">%r,/</span>).<span class="ruby-identifier">map</span> { <span class="ruby-operator">|</span><span class="ruby-identifier">v</span><span class="ruby-operator">|</span> <span class="ruby-identifier">v</span>.<span class="ruby-identifier">to_i</span>.<span class="ruby-identifier">to_s</span> <span class="ruby-operator">==</span> <span class="ruby-identifier">v</span> <span class="ruby-operator">?</span> <span class="ruby-identifier">v</span>.<span class="ruby-identifier">to_i</span> <span class="ruby-operator">:</span> <span class="ruby-identifier">v</span> }&#x000A;    <span class="ruby-identifier">values</span> = <span class="ruby-identifier">values</span>.<span class="ruby-identifier">first</span> <span class="ruby-keyword">if</span> <span class="ruby-identifier">values</span>.<span class="ruby-identifier">length</span> <span class="ruby-operator">==</span> <span class="ruby-value">1</span>&#x000A;    <span class="ruby-identifier">options</span>[<span class="ruby-identifier">opt_name</span>] = <span class="ruby-identifier">values</span>&#x000A;  <span class="ruby-keyword">end</span>&#x000A;<span class="ruby-keyword">end</span></pre>
+                </div>
+              </div>
+              <div class='method public-class' id='method-method-c-new2'>
+                <a name='method-c-new2'></a>
+                <div class='synopsis'>
+                  <span class='name'>new2</span>
+                  <span class='arguments'>(user, password, host, port, path, query)</span>
+                </div>
+                <div class='description'>
+                  
+                </div>
+                <div class='source'>
+                  <a class='source-toggle' href='#' onclick="toggleCode('method-c-new2-source'); return false">
+                    [show source]
+                  </a>
+                  <pre id='method-c-new2-source'><span class="ruby-comment"># File lib/uri/scp.rb, line 16</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">new2</span>(<span class="ruby-identifier">user</span>, <span class="ruby-identifier">password</span>, <span class="ruby-identifier">host</span>, <span class="ruby-identifier">port</span>, <span class="ruby-identifier">path</span>, <span class="ruby-identifier">query</span>)&#x000A;  <span class="ruby-identifier">new</span>(<span class="ruby-string">'scp'</span>, [<span class="ruby-identifier">user</span>, <span class="ruby-identifier">password</span>], <span class="ruby-identifier">host</span>, <span class="ruby-identifier">port</span>, <span class="ruby-keyword">nil</span>, <span class="ruby-identifier">path</span>, <span class="ruby-keyword">nil</span>, <span class="ruby-identifier">query</span>)&#x000A;<span class="ruby-keyword">end</span></pre>
+                </div>
+              </div>
+              <h2>Public Instance methods</h2>
+              <div class='method public-instance' id='method-method-i-buffer_open'>
+                <a name='method-i-buffer_open'></a>
+                <div class='synopsis'>
+                  <span class='name'>buffer_open</span>
+                  <span class='arguments'>(buf, proxy, open_options)</span>
+                </div>
+                <div class='description'>
+                  
+                </div>
+                <div class='source'>
+                  <a class='source-toggle' href='#' onclick="toggleCode('method-i-buffer_open-source'); return false">
+                    [show source]
+                  </a>
+                  <pre id='method-i-buffer_open-source'><span class="ruby-comment"># File lib/uri/open-scp.rb, line 8</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-identifier">buffer_open</span>(<span class="ruby-identifier">buf</span>, <span class="ruby-identifier">proxy</span>, <span class="ruby-identifier">open_options</span>)&#x000A;  <span class="ruby-identifier">options</span> = <span class="ruby-identifier">open_options</span>.<span class="ruby-identifier">merge</span>(<span class="ruby-value">:port</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">port</span>, <span class="ruby-value">:password</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">password</span>)&#x000A;  <span class="ruby-identifier">progress</span> = <span class="ruby-identifier">options</span>.<span class="ruby-identifier">delete</span>(<span class="ruby-value">:progress_proc</span>)&#x000A;  <span class="ruby-identifier">buf</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-constant">Net</span><span class="ruby-operator">::</span><span class="ruby-constant">SCP</span>.<span class="ruby-identifier">download!</span>(<span class="ruby-identifier">host</span>, <span class="ruby-identifier">user</span>, <span class="ruby-identifier">path</span>, <span class="ruby-keyword">nil</span>, <span class="ruby-identifier">open_options</span>, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-identifier">buf</span>.<span class="ruby-identifier">io</span>.<span class="ruby-identifier">rewind</span>&#x000A;<span class="ruby-keyword">end</span></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id='footer-push'></div>
+    </div>
+    <div id='footer'>
+      <a target="docwin" href="http://github.com/mislav/hanna/tree/master"><strong>Hanna</strong> RDoc template</a>
+    </div>
+  </body>
+</html>
