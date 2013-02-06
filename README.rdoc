@@ -2,7 +2,7 @@
 
 * Docs: http://net-ssh.github.com/net-scp
 * Issues: https://github.com/net-ssh/net-scp/issues
-* Codes: https://github.com/net-ssh/net-sc
+* Codes: https://github.com/net-ssh/net-scp
 * Email: net-ssh@solutious.com
 
 <em>As of v1.0.5, all gem releases are signed. See INSTALL.</em>
