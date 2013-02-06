@@ -1,6 +1,12 @@
 = Net::SCP
 
-* http://github.com/net-ssh/net-scp
+* Docs: http://net-ssh.github.com/net-scp
+* Issues: https://github.com/net-ssh/net-scp/issues
+* Codes: https://github.com/net-ssh/net-sc
+* Email: net-ssh@solutious.com
+
+<em>As of v1.0.5, all gem releases are signed. See INSTALL.</em>
+
 
 == DESCRIPTION:
 
@@ -64,6 +70,20 @@ If you wish to run the tests, you'll also need:
 == INSTALL:
 
 * gem install net-scp (might need sudo privileges)
+
+However, in order to be sure the code you're installing hasn't been tampered with, it's recommended that you verify the signiture[http://docs.rubygems.org/read/chapter/21]. To do this, you need to add my public key as a trusted certificate (you only need to do this once):
+
+    # Add the public key as a trusted certificate
+    # (You only need to do this once)
+    $ curl -O https://raw.github.com/net-ssh/net-ssh/master/gem-public_cert.pem
+    $ gem cert --add gem-public_cert.pem
+
+Then, when install the gem, do so with high security:
+
+    $ gem install net-scp -P HighSecurity
+
+If you don't add the public key, you'll see an error like "Couldn't verify data signature". If you're still having trouble let me know and I'll give you a hand.
+
 
 Or, you can do it the hard way (without Rubygems):
 
