@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = "net-scp"
-  s.version = "1.0.4"
+  s.version = "1.0.5"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Jamis Buck", "Delano Mandelbaum"]
@@ -23,6 +23,7 @@ Gem::Specification.new do |s|
     "Manifest",
     "README.rdoc",
     "Rakefile",
+    "gem-public_cert.pem",
     "lib/net/scp.rb",
     "lib/net/scp/download.rb",
     "lib/net/scp/errors.rb",
