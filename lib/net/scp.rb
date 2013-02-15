@@ -338,7 +338,14 @@ module Net
       # (See Net::SCP::Upload and Net::SCP::Download).
       def start_command(mode, local, remote, options={}, &callback)
         session.open_channel do |channel|
-          command = "#{scp_command(mode, options)} #{shellescape remote}"
+        
+          if options[:shell]
+            escaped_file = shellescape(remote).gsub(/'/) { |m| "'\\''" }
+            command = "#{options[:shell]} -c '#{scp_command(mode, options)} #{escaped_file}'"
+          else
+            command = "#{scp_command(mode, options)} #{shellescape remote}"
+          end
+
           channel.exec(command) do |ch, success|
             if success
               channel[:local   ] = local
