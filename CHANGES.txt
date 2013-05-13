@@ -1,4 +1,8 @@
 
+=== 1.1.1 / 13 May 2013
+
+* Allow passing a shell to use when executing scp. [Arthur Schreiber]
+
 === 1.1.0 / 06 Feb 2013
 
 * Added public cert. All gem releases are now signed. See INSTALL in readme.
