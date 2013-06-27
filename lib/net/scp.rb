@@ -53,7 +53,7 @@ module Net
   # == Progress Reporting
   #
   # By default, uploading and downloading proceed silently, without any
-  # outword indication of their progress. For long running uploads or downloads
+  # outward indication of their progress. For long running uploads or downloads
   # (and especially in interactive environments) it is desirable to report
   # to the user the progress of the current operation.
   #
