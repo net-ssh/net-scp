@@ -408,7 +408,10 @@ module Net
       end
 
       # Imported from ruby 1.9.2 shellwords.rb
-      def shellescape(str)
+      def shellescape(path)
+        # Convert path to a string if it isn't already one.
+        str = path.to_s
+
         # ruby 1.8.7+ implements String#shellescape
         return str.shellescape if str.respond_to? :shellescape
 
