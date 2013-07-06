@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Jamis Buck", "Delano Mandelbaum"]
   s.cert_chain = ["gem-public_cert.pem"]
-  s.date = "2013-05-13"
+  s.date = "2013-07-06"
   s.description = "A pure Ruby implementation of the SCP client protocol"
   s.email = "net-ssh@solutious.com"
   s.extra_rdoc_files = [

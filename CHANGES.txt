@@ -1,4 +1,8 @@
 
+=== 1.1.2 / 6 Jul 2013
+
+* Explicit convert to string in shellescape [jwils]
+
 === 1.1.1 / 13 May 2013
 
 * Allow passing a shell to use when executing scp. [Arthur Schreiber]
