@@ -356,7 +356,10 @@ module Net
               channel[:state   ] = "#{mode}_start"
               channel[:stack   ] = []
 
-              channel.on_close                  { |ch| raise Net::SCP::Error, "SCP did not finish successfully (#{ch[:exit]})" if ch[:exit] != 0 }
+              channel.on_close{|ch|
+                channel.close
+                raise Net::SCP::Error, "SCP did not finish successfully (#{ch[:exit]})" if ch[:exit] != 0
+              }
               channel.on_data                   { |ch, data| channel[:buffer].append(data) }
               channel.on_extended_data          { |ch, type, data| debug { data.chomp } }
               channel.on_request("exit-status") { |ch, data| channel[:exit] = data.read_long }
