@@ -2,6 +2,8 @@ require 'open-uri'
 require 'uri/scp'
 require 'net/scp'
 
+OpenURI::Options[:ssh] = nil
+
 module URI
 
   class SCP
