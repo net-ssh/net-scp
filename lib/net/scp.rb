@@ -1,4 +1,5 @@
 require 'stringio'
+require 'shellwords'
 
 require 'net/ssh'
 require 'net/scp/errors'
@@ -52,7 +53,7 @@ module Net
   # == Progress Reporting
   #
   # By default, uploading and downloading proceed silently, without any
-  # outword indication of their progress. For long running uploads or downloads
+  # outward indication of their progress. For long running uploads or downloads
   # (and especially in interactive environments) it is desirable to report
   # to the user the progress of the current operation.
   #
@@ -337,7 +338,14 @@ module Net
       # (See Net::SCP::Upload and Net::SCP::Download).
       def start_command(mode, local, remote, options={}, &callback)
         session.open_channel do |channel|
-          command = "#{scp_command(mode, options)} #{sanitize_file_name(remote)}"
+        
+          if options[:shell]
+            escaped_file = shellescape(remote).gsub(/'/) { |m| "'\\''" }
+            command = "#{options[:shell]} -c '#{scp_command(mode, options)} #{escaped_file}'"
+          else
+            command = "#{scp_command(mode, options)} #{shellescape remote}"
+          end
+
           channel.exec(command) do |ch, success|
             if success
               channel[:local   ] = local
@@ -399,8 +407,28 @@ module Net
         channel[:callback].call(channel, name, sent, total) if channel[:callback]
       end
 
-      def sanitize_file_name(file_name)
-        file_name.gsub(/[ ]/) { |m| "\\#{m}" }
+      # Imported from ruby 1.9.2 shellwords.rb
+      def shellescape(path)
+        # Convert path to a string if it isn't already one.
+        str = path.to_s
+
+        # ruby 1.8.7+ implements String#shellescape
+        return str.shellescape if str.respond_to? :shellescape
+
+        # An empty argument will be skipped, so return empty quotes.
+        return "''" if str.empty?
+
+        str = str.dup
+
+        # Process as a single byte sequence because not all shell
+        # implementations are multibyte aware.
+        str.gsub!(/([^A-Za-z0-9_\-.,:\/@\n])/n, "\\\\\\1")
+
+        # A LF cannot be escaped with a backslash because a backslash + LF
+        # combo is regarded as line continuation and simply ignored.
+        str.gsub!(/\n/, "'\n'")
+
+        return str
       end
   end
 end

@@ -1,30 +1,60 @@
-$LOAD_PATH.unshift "../net-ssh/lib"
-require './lib/net/scp/version'
+require "rubygems"
+require "rake"
+require "rake/clean"
+require "rdoc/task"
+
+task :default => ["build"]
+CLEAN.include [ 'pkg', 'rdoc' ]
+name = "net-scp"
+
+$:.unshift File.join(File.dirname(__FILE__), 'lib')
+require "net/scp/version"
+version = Net::SCP::Version::STRING.dup
 
 begin
-  require 'echoe'
+  require "jeweler"
+  Jeweler::Tasks.new do |s|
+    s.version = version
+    s.name = name
+    s.rubyforge_project = s.name
+    s.summary = "A pure Ruby implementation of the SCP client protocol"
+    s.description = s.summary
+    s.email = "net-ssh@solutious.com"
+    s.homepage = "https://github.com/net-ssh/net-scp"
+    s.authors = ["Jamis Buck", "Delano Mandelbaum"]
+
+    s.add_dependency 'net-ssh', ">=2.6.5"
+
+    s.add_development_dependency 'test-unit'
+    s.add_development_dependency 'mocha'
+
+    s.license = "MIT"
+
+    s.signing_key = File.join('/mnt/gem/', 'gem-private_key.pem')
+    s.cert_chain  = ['gem-public_cert.pem']
+  end
+  Jeweler::GemcutterTasks.new
 rescue LoadError
-  abort "You'll need to have `echoe' installed to use Net::SCP's Rakefile"
+  puts "Jeweler (or a dependency) not available. Install it with: sudo gem install jeweler"
 end
 
-version = Net::SCP::Version::STRING.dup
-if ENV['SNAPSHOT'].to_i == 1
-  version << "." << Time.now.utc.strftime("%Y%m%d%H%M%S")
+require 'rake/testtask'
+Rake::TestTask.new do |t|
+  t.libs = ["lib", "test"]
 end
 
-Echoe.new('net-scp', version) do |p|
-  p.project          = "net-ssh"
-  p.changelog        = "CHANGELOG.rdoc"
-
-  p.author           = "Jamis Buck"
-  p.email            = "jamis@jamisbuck.org"
-  p.summary          = "A pure Ruby implementation of the SCP client protocol"
-  p.url              = "http://net-ssh.rubyforge.org/scp"
-
-  p.dependencies     = ["net-ssh >=1.99.1"]
-
-  p.need_zip         = true
-  p.include_rakefile = true
-
-  p.rdoc_pattern     = /^(lib|README.rdoc|CHANGELOG.rdoc)/
+extra_files = %w[LICENSE.txt THANKS.txt CHANGES.txt ]
+RDoc::Task.new do |rdoc|
+  rdoc.rdoc_dir = "rdoc"
+  rdoc.title = "#{name} #{version}"
+  rdoc.generator = 'hanna' # gem install hanna-nouveau
+  rdoc.main = 'README.rdoc'
+  rdoc.rdoc_files.include("README*")
+  rdoc.rdoc_files.include("bin/*.rb")
+  rdoc.rdoc_files.include("lib/**/*.rb")
+  extra_files.each { |file|
+    rdoc.rdoc_files.include(file) if File.exists?(file)
+  }
 end
+
+
