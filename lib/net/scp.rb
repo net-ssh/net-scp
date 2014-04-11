@@ -128,6 +128,11 @@ module Net
   # * E -- terminator directive. Indicates the end of a directory, and subsequent
   #   files and directories should be received by the parent of the current
   #   directory.
+  # * \0 -- indicates a successful response from the other end.
+  # * \1 -- warning directive. Indicates a warning from the other end.  Text from
+  #   this warning will be reported if the SCP results in an error.
+  # * \2 -- error directive.  Indicates an error from the other end.  Text from
+  #   this error will be reported if the SCP results in an error.
   #
   # If a 'C' directive is received, we switch over to
   # Net::SCP::Download#read_data_state. If an 'E' directive is received, and
@@ -355,8 +360,9 @@ module Net
               channel[:buffer  ] = Net::SSH::Buffer.new
               channel[:state   ] = "#{mode}_start"
               channel[:stack   ] = []
+              channel[:error_string] = ''
 
-              channel.on_close                  { |ch| raise Net::SCP::Error, "SCP did not finish successfully (#{ch[:exit]})" if ch[:exit] != 0 }
+              channel.on_close                  { |ch| send("#{channel[:state]}_state", channel); raise Net::SCP::Error, "SCP did not finish successfully (#{channel[:exit]}): #{channel[:error_string]}" if channel[:exit] != 0 }
               channel.on_data                   { |ch, data| channel[:buffer].append(data) }
               channel.on_extended_data          { |ch, type, data| debug { data.chomp } }
               channel.on_request("exit-status") { |ch, data| channel[:exit] = data.read_long }

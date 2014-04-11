@@ -54,6 +54,33 @@ class TestDownload < Net::SCP::TestCase
     assert_equal "a" * 1234, file.io.string
   end
 
+  def test_download_with_error_should_respond_with_error_text
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec "scp -f /path/to/remote.txt"
+
+      channel.sends_ok
+      channel.gets_data "\x01File not found: /path/to/remote.txt\n"
+      channel.sends_ok
+
+      channel.gets_eof
+      channel.gets_exit_status(1)
+      channel.gets_close
+      channel.sends_close
+    end
+
+    error = nil
+    assert_scripted do
+      begin
+        scp.download!("/path/to/remote.txt")
+      rescue
+        error = $!
+      end
+    end
+    assert_equal Net::SCP::Error, error.class
+    assert_equal "SCP did not finish successfully (1): File not found: /path/to/remote.txt\n", error.message
+  end
+
   def test_download_with_progress_callback_should_invoke_callback
     prepare_file("/path/to/local.txt", "a" * 3000 + "b" * 3000 + "c" * 3000 + "d" * 3000)
 
