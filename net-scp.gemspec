@@ -5,12 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "net-scp"
-  s.version = "1.1.2"
+  s.version = "1.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Jamis Buck", "Delano Mandelbaum"]
-  s.cert_chain = ["gem-public_cert.pem"]
-  s.date = "2013-07-06"
+  s.date = "2014-04-11"
   s.description = "A pure Ruby implementation of the SCP client protocol"
   s.email = "net-ssh@solutious.com"
   s.extra_rdoc_files = [
@@ -43,8 +42,7 @@ Gem::Specification.new do |s|
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
   s.rubyforge_project = "net-scp"
-  s.rubygems_version = "1.8.25"
-  s.signing_key = "/mnt/gem/gem-private_key.pem"
+  s.rubygems_version = "1.8.23"
   s.summary = "A pure Ruby implementation of the SCP client protocol"
 
   if s.respond_to? :specification_version then

@@ -1,4 +1,8 @@
 
+=== 1.2.0 / 11 Apr 2014
+
+* Get the error string during download [jkeiser]
+
 === 1.1.2 / 6 Jul 2013
 
 * Explicit convert to string in shellescape [jwils]
