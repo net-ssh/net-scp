@@ -5,7 +5,7 @@ rvm:
   - "2.1.0"
 
 
-install: gem install jeweler test-unit mocha
+install: gem install jeweler test-unit mocha net-ssh
 
 script: rake test
 
