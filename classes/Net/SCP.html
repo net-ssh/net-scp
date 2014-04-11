@@ -67,21 +67,21 @@
             
             <p>Basic usage:</p>
             
-            <pre class="ruby"><span class="ruby-identifier">require</span> <span class="ruby-string">'net/scp'</span>&#x000A;&#x000A;<span class="ruby-constant">Net</span><span class="ruby-operator">::</span><span class="ruby-constant">SCP</span>.<span class="ruby-identifier">start</span>(<span class="ruby-string">&quot;remote.host&quot;</span>, <span class="ruby-string">&quot;username&quot;</span>, :<span class="ruby-identifier">password</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-string">&quot;passwd&quot;</span>) <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">scp</span><span class="ruby-operator">|</span>&#x000A;  <span class="ruby-comment"># synchronous (blocking) upload; call blocks until upload completes</span>&#x000A;  <span class="ruby-identifier">scp</span>.<span class="ruby-identifier">upload!</span> <span class="ruby-string">&quot;/local/path&quot;</span>, <span class="ruby-string">&quot;/remote/path&quot;</span>&#x000A;&#x000A;  <span class="ruby-comment"># asynchronous upload; call returns immediately and requires SSH</span>&#x000A;  <span class="ruby-comment"># event loop to run</span>&#x000A;  <span class="ruby-identifier">channel</span> = <span class="ruby-identifier">scp</span>.<span class="ruby-identifier">upload</span>(<span class="ruby-string">&quot;/local/path&quot;</span>, <span class="ruby-string">&quot;/remote/path&quot;</span>)&#x000A;  <span class="ruby-identifier">channel</span>.<span class="ruby-identifier">wait</span>&#x000A;<span class="ruby-keyword">end</span></pre>
+            <pre>require 'net/scp'&#x000A;Net::SCP.start(&quot;remote.host&quot;, &quot;username&quot;, :password =&gt; &quot;passwd&quot;) do |scp|&#x000A;  # synchronous (blocking) upload; call blocks until upload completes&#x000A;  scp.upload! &quot;/local/path&quot;, &quot;/remote/path&quot;&#x000A;&#x000A;  # asynchronous upload; call returns immediately and requires SSH&#x000A;  # event loop to run&#x000A;  channel = scp.upload(&quot;/local/path&quot;, &quot;/remote/path&quot;)&#x000A;  channel.wait&#x000A;end</pre>
             
             <p><a href="SCP.html">Net::SCP</a> also provides an open-uri tie-in, so you
             can use the Kernel#open method to open and read a remote file:</p>
             
-            <pre class="ruby"><span class="ruby-comment"># if you just want to parse SCP URL's:</span>&#x000A;<span class="ruby-identifier">require</span> <span class="ruby-string">'uri/scp'</span>&#x000A;<span class="ruby-identifier">url</span> = <span class="ruby-constant">URI</span>.<span class="ruby-identifier">parse</span>(<span class="ruby-string">&quot;scp://user@remote.host/path/to/file&quot;</span>)&#x000A;&#x000A;<span class="ruby-comment"># if you want to read from a URL voa SCP:</span>&#x000A;<span class="ruby-identifier">require</span> <span class="ruby-string">'uri/open-scp'</span>&#x000A;<span class="ruby-identifier">puts</span> <span class="ruby-identifier">open</span>(<span class="ruby-string">&quot;scp://user@remote.host/path/to/file&quot;</span>).<span class="ruby-identifier">read</span></pre>
+            <pre># if you just want to parse SCP URL's:&#x000A;require 'uri/scp'&#x000A;url = URI.parse(&quot;scp://user@remote.host/path/to/file&quot;)&#x000A;# if you want to read from a URL voa SCP:&#x000A;require 'uri/open-scp'&#x000A;puts open(&quot;scp://user@remote.host/path/to/file&quot;).read</pre>
             
             <p>Lastly, <a href="SCP.html">Net::SCP</a> adds a method to the <a
             href="SSH/Connection/Session.html">Net::SSH::Connection::Session</a> class,
             allowing you to easily grab a <a href="SCP.html">Net::SCP</a> reference
             from an existing <a href="SSH.html">Net::SSH</a> session:</p>
             
-            <pre class="ruby"><span class="ruby-identifier">require</span> <span class="ruby-string">'net/ssh'</span>&#x000A;<span class="ruby-identifier">require</span> <span class="ruby-string">'net/scp'</span>&#x000A;&#x000A;<span class="ruby-constant">Net</span><span class="ruby-operator">::</span><span class="ruby-constant">SSH</span>.<span class="ruby-identifier">start</span>(<span class="ruby-string">&quot;remote.host&quot;</span>, <span class="ruby-string">&quot;username&quot;</span>, :<span class="ruby-identifier">password</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-string">&quot;passwd&quot;</span>) <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">ssh</span><span class="ruby-operator">|</span>&#x000A;  <span class="ruby-identifier">ssh</span>.<span class="ruby-identifier">scp</span>.<span class="ruby-identifier">download!</span> <span class="ruby-string">&quot;/remote/path&quot;</span>, <span class="ruby-string">&quot;/local/path&quot;</span>&#x000A;<span class="ruby-keyword">end</span></pre>
+            <pre>require 'net/ssh'&#x000A;require 'net/scp'&#x000A;Net::SSH.start(&quot;remote.host&quot;, &quot;username&quot;, :password =&gt; &quot;passwd&quot;) do |ssh|&#x000A;  ssh.scp.download! &quot;/remote/path&quot;, &quot;/local/path&quot;&#x000A;end</pre>
             
-            <h2 id="label-Progress+Reporting">Progress Reporting</h2>
+            <h2>Progress Reporting</h2>
             
             <p>By default, uploading and downloading proceed silently, without any outward
             indication of their progress. For long running uploads or downloads (and
@@ -92,7 +92,7 @@
             <a href="SCP.html#method-i-upload">upload</a> or <a
             href="SCP.html#method-i-download">download</a> (or one of their variants):</p>
             
-            <pre class="ruby"><span class="ruby-identifier">scp</span>.<span class="ruby-identifier">upload!</span>(<span class="ruby-string">&quot;/path/to/local&quot;</span>, <span class="ruby-string">&quot;/path/to/remote&quot;</span>) <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">ch</span>, <span class="ruby-identifier">name</span>, <span class="ruby-identifier">sent</span>, <span class="ruby-identifier">total</span><span class="ruby-operator">|</span>&#x000A;  <span class="ruby-identifier">puts</span> <span class="ruby-node">&quot;#{name}: #{sent}/#{total}&quot;</span>&#x000A;<span class="ruby-keyword">end</span></pre>
+            <pre>scp.upload!(&quot;/path/to/local&quot;, &quot;/path/to/remote&quot;) do |ch, name, sent, total|&#x000A;  puts &quot;#{name}: #{sent}/#{total}&quot;&#x000A;end</pre>
             
             <p>Whenever a new chunk of data is recieved for or sent to a file, the
             callback will be invoked, indicating the name of the file (local for
@@ -166,10 +166,10 @@
                 <div class='description'>
                   
                   <p>Starts up a new <a href="SSH.html">SSH</a> connection using the
-                  <code>host</code> and <code>username</code> parameters, instantiates a new
-                  <a href="SCP.html">SCP</a> session on top of it, and then begins a download
-                  from <code>remote</code> to <code>local</code>. If the <code>options</code>
-                  hash includes an :ssh key, the value for that will be passed to the <a
+                  <tt>host</tt> and <tt>username</tt> parameters, instantiates a new <a
+                  href="SCP.html">SCP</a> session on top of it, and then begins a download
+                  from <tt>remote</tt> to <tt>local</tt>. If the <tt>options</tt> hash
+                  includes an :ssh key, the value for that will be passed to the <a
                   href="SSH.html">SSH</a> connection as options (e.g., to set the password,
                   etc.). All other options are passed to the <a
                   href="SCP.html#method-i-download-21">download!</a> method. If a block is
@@ -180,7 +180,7 @@
                   <a class='source-toggle' href='#' onclick="toggleCode('method-c-download-21-source'); return false">
                     [show source]
                   </a>
-                  <pre id='method-c-download-21-source'><span class="ruby-comment"># File lib/net/scp.rb, line 233</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">download!</span>(<span class="ruby-identifier">host</span>, <span class="ruby-identifier">username</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">local</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">options</span>={}, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-identifier">options</span> = <span class="ruby-identifier">options</span>.<span class="ruby-identifier">dup</span>&#x000A;  <span class="ruby-identifier">start</span>(<span class="ruby-identifier">host</span>, <span class="ruby-identifier">username</span>, <span class="ruby-identifier">options</span>.<span class="ruby-identifier">delete</span>(<span class="ruby-value">:ssh</span>) <span class="ruby-operator">||</span> {}) <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">scp</span><span class="ruby-operator">|</span>&#x000A;    <span class="ruby-keyword">return</span> <span class="ruby-identifier">scp</span>.<span class="ruby-identifier">download!</span>(<span class="ruby-identifier">remote</span>, <span class="ruby-identifier">local</span>, <span class="ruby-identifier">options</span>, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-keyword">end</span>&#x000A;<span class="ruby-keyword">end</span></pre>
+                  <pre id='method-c-download-21-source'><span class="ruby-comment"># File lib/net/scp.rb, line 238</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">download!</span>(<span class="ruby-identifier">host</span>, <span class="ruby-identifier">username</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">local</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">options</span>={}, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-identifier">options</span> = <span class="ruby-identifier">options</span>.<span class="ruby-identifier">dup</span>&#x000A;  <span class="ruby-identifier">start</span>(<span class="ruby-identifier">host</span>, <span class="ruby-identifier">username</span>, <span class="ruby-identifier">options</span>.<span class="ruby-identifier">delete</span>(<span class="ruby-value">:ssh</span>) <span class="ruby-operator">||</span> {}) <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">scp</span><span class="ruby-operator">|</span>&#x000A;    <span class="ruby-keyword">return</span> <span class="ruby-identifier">scp</span>.<span class="ruby-identifier">download!</span>(<span class="ruby-identifier">remote</span>, <span class="ruby-identifier">local</span>, <span class="ruby-identifier">options</span>, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-keyword">end</span>&#x000A;<span class="ruby-keyword">end</span></pre>
                 </div>
               </div>
               <div class='method public-class' id='method-method-c-new'>
@@ -192,13 +192,13 @@
                 <div class='description'>
                   
                   <p>Creates a new <a href="SCP.html">Net::SCP</a> session on top of the given
-                  <a href="SSH.html">Net::SSH</a> <code>session</code> object.</p>
+                  <a href="SSH.html">Net::SSH</a> <tt>session</tt> object.</p>
                 </div>
                 <div class='source'>
                   <a class='source-toggle' href='#' onclick="toggleCode('method-c-new-source'); return false">
                     [show source]
                   </a>
-                  <pre id='method-c-new-source'><span class="ruby-comment"># File lib/net/scp.rb, line 246</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-identifier">initialize</span>(<span class="ruby-identifier">session</span>)&#x000A;  <span class="ruby-ivar">@session</span> = <span class="ruby-identifier">session</span>&#x000A;  <span class="ruby-keyword">self</span>.<span class="ruby-identifier">logger</span> = <span class="ruby-identifier">session</span>.<span class="ruby-identifier">logger</span>&#x000A;<span class="ruby-keyword">end</span></pre>
+                  <pre id='method-c-new-source'><span class="ruby-comment"># File lib/net/scp.rb, line 251</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-identifier">initialize</span>(<span class="ruby-identifier">session</span>)&#x000A;  <span class="ruby-ivar">@session</span> = <span class="ruby-identifier">session</span>&#x000A;  <span class="ruby-keyword">self</span>.<span class="ruby-identifier">logger</span> = <span class="ruby-identifier">session</span>.<span class="ruby-identifier">logger</span>&#x000A;<span class="ruby-keyword">end</span></pre>
                 </div>
               </div>
               <div class='method public-class' id='method-method-c-start'>
@@ -220,7 +220,7 @@
                   <a class='source-toggle' href='#' onclick="toggleCode('method-c-start-source'); return false">
                     [show source]
                   </a>
-                  <pre id='method-c-start-source'><span class="ruby-comment"># File lib/net/scp.rb, line 196</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">start</span>(<span class="ruby-identifier">host</span>, <span class="ruby-identifier">username</span>, <span class="ruby-identifier">options</span>={})&#x000A;  <span class="ruby-identifier">session</span> = <span class="ruby-constant">Net</span><span class="ruby-operator">::</span><span class="ruby-constant">SSH</span>.<span class="ruby-identifier">start</span>(<span class="ruby-identifier">host</span>, <span class="ruby-identifier">username</span>, <span class="ruby-identifier">options</span>)&#x000A;  <span class="ruby-identifier">scp</span> = <span class="ruby-identifier">new</span>(<span class="ruby-identifier">session</span>)&#x000A;&#x000A;  <span class="ruby-keyword">if</span> <span class="ruby-identifier">block_given?</span>&#x000A;    <span class="ruby-keyword">begin</span>&#x000A;      <span class="ruby-keyword">yield</span> <span class="ruby-identifier">scp</span>&#x000A;      <span class="ruby-identifier">session</span>.<span class="ruby-identifier">loop</span>&#x000A;    <span class="ruby-keyword">ensure</span>&#x000A;      <span class="ruby-identifier">session</span>.<span class="ruby-identifier">close</span>&#x000A;    <span class="ruby-keyword">end</span>&#x000A;  <span class="ruby-keyword">else</span>&#x000A;    <span class="ruby-keyword">return</span> <span class="ruby-identifier">scp</span>&#x000A;  <span class="ruby-keyword">end</span>&#x000A;<span class="ruby-keyword">end</span></pre>
+                  <pre id='method-c-start-source'><span class="ruby-comment"># File lib/net/scp.rb, line 201</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">start</span>(<span class="ruby-identifier">host</span>, <span class="ruby-identifier">username</span>, <span class="ruby-identifier">options</span>={})&#x000A;  <span class="ruby-identifier">session</span> = <span class="ruby-constant">Net</span><span class="ruby-operator">::</span><span class="ruby-constant">SSH</span>.<span class="ruby-identifier">start</span>(<span class="ruby-identifier">host</span>, <span class="ruby-identifier">username</span>, <span class="ruby-identifier">options</span>)&#x000A;  <span class="ruby-identifier">scp</span> = <span class="ruby-identifier">new</span>(<span class="ruby-identifier">session</span>)&#x000A;&#x000A;  <span class="ruby-keyword">if</span> <span class="ruby-identifier">block_given?</span>&#x000A;    <span class="ruby-keyword">begin</span>&#x000A;      <span class="ruby-keyword">yield</span> <span class="ruby-identifier">scp</span>&#x000A;      <span class="ruby-identifier">session</span>.<span class="ruby-identifier">loop</span>&#x000A;    <span class="ruby-keyword">ensure</span>&#x000A;      <span class="ruby-identifier">session</span>.<span class="ruby-identifier">close</span>&#x000A;    <span class="ruby-keyword">end</span>&#x000A;  <span class="ruby-keyword">else</span>&#x000A;    <span class="ruby-keyword">return</span> <span class="ruby-identifier">scp</span>&#x000A;  <span class="ruby-keyword">end</span>&#x000A;<span class="ruby-keyword">end</span></pre>
                 </div>
               </div>
               <div class='method public-class' id='method-method-c-upload-21'>
@@ -232,10 +232,10 @@
                 <div class='description'>
                   
                   <p>Starts up a new <a href="SSH.html">SSH</a> connection using the
-                  <code>host</code> and <code>username</code> parameters, instantiates a new
-                  <a href="SCP.html">SCP</a> session on top of it, and then begins an upload
-                  from <code>local</code> to <code>remote</code>. If the <code>options</code>
-                  hash includes an :ssh key, the value for that will be passed to the <a
+                  <tt>host</tt> and <tt>username</tt> parameters, instantiates a new <a
+                  href="SCP.html">SCP</a> session on top of it, and then begins an upload
+                  from <tt>local</tt> to <tt>remote</tt>. If the <tt>options</tt> hash
+                  includes an :ssh key, the value for that will be passed to the <a
                   href="SSH.html">SSH</a> connection as options (e.g., to set the password,
                   etc.). All other options are passed to the <a
                   href="SCP.html#method-i-upload-21">upload!</a> method. If a block is given,
@@ -246,7 +246,7 @@
                   <a class='source-toggle' href='#' onclick="toggleCode('method-c-upload-21-source'); return false">
                     [show source]
                   </a>
-                  <pre id='method-c-upload-21-source'><span class="ruby-comment"># File lib/net/scp.rb, line 219</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">upload!</span>(<span class="ruby-identifier">host</span>, <span class="ruby-identifier">username</span>, <span class="ruby-identifier">local</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">options</span>={}, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-identifier">options</span> = <span class="ruby-identifier">options</span>.<span class="ruby-identifier">dup</span>&#x000A;  <span class="ruby-identifier">start</span>(<span class="ruby-identifier">host</span>, <span class="ruby-identifier">username</span>, <span class="ruby-identifier">options</span>.<span class="ruby-identifier">delete</span>(<span class="ruby-value">:ssh</span>) <span class="ruby-operator">||</span> {}) <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">scp</span><span class="ruby-operator">|</span>&#x000A;    <span class="ruby-identifier">scp</span>.<span class="ruby-identifier">upload!</span>(<span class="ruby-identifier">local</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">options</span>, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-keyword">end</span>&#x000A;<span class="ruby-keyword">end</span></pre>
+                  <pre id='method-c-upload-21-source'><span class="ruby-comment"># File lib/net/scp.rb, line 224</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">upload!</span>(<span class="ruby-identifier">host</span>, <span class="ruby-identifier">username</span>, <span class="ruby-identifier">local</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">options</span>={}, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-identifier">options</span> = <span class="ruby-identifier">options</span>.<span class="ruby-identifier">dup</span>&#x000A;  <span class="ruby-identifier">start</span>(<span class="ruby-identifier">host</span>, <span class="ruby-identifier">username</span>, <span class="ruby-identifier">options</span>.<span class="ruby-identifier">delete</span>(<span class="ruby-value">:ssh</span>) <span class="ruby-operator">||</span> {}) <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">scp</span><span class="ruby-operator">|</span>&#x000A;    <span class="ruby-identifier">scp</span>.<span class="ruby-identifier">upload!</span>(<span class="ruby-identifier">local</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">options</span>, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-keyword">end</span>&#x000A;<span class="ruby-keyword">end</span></pre>
                 </div>
               </div>
               <h2>Public Instance methods</h2>
@@ -258,12 +258,12 @@
                 </div>
                 <div class='description'>
                   
-                  <p>Inititiate a synchronous (non-blocking) download from <code>remote</code>
-                  to <code>local</code>. The following options are recognized:</p>
+                  <p>Inititiate a synchronous (non-blocking) download from <tt>remote</tt> to
+                  <tt>local</tt>. The following options are recognized:</p>
                   <ul><li>
-                  <p>:recursive - the <code>remote</code> parameter refers to a remote
-                  directory, which should be downloaded to a new directory named
-                  <code>local</code> on the local machine.</p>
+                  <p>:recursive - the <tt>remote</tt> parameter refers to a remote directory,
+                  which should be downloaded to a new directory named <tt>local</tt> on the
+                  local machine.</p>
                   </li><li>
                   <p>:preserve - the atime and mtime of the file should be preserved.</p>
                   </li><li>
@@ -283,7 +283,7 @@
                   <a class='source-toggle' href='#' onclick="toggleCode('method-i-download-source'); return false">
                     [show source]
                   </a>
-                  <pre id='method-i-download-source'><span class="ruby-comment"># File lib/net/scp.rb, line 299</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-identifier">download</span>(<span class="ruby-identifier">remote</span>, <span class="ruby-identifier">local</span>, <span class="ruby-identifier">options</span>={}, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-identifier">start_command</span>(<span class="ruby-value">:download</span>, <span class="ruby-identifier">local</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">options</span>, &amp;<span class="ruby-identifier">progress</span>)&#x000A;<span class="ruby-keyword">end</span></pre>
+                  <pre id='method-i-download-source'><span class="ruby-comment"># File lib/net/scp.rb, line 304</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-identifier">download</span>(<span class="ruby-identifier">remote</span>, <span class="ruby-identifier">local</span>, <span class="ruby-identifier">options</span>={}, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-identifier">start_command</span>(<span class="ruby-value">:download</span>, <span class="ruby-identifier">local</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">options</span>, &amp;<span class="ruby-identifier">progress</span>)&#x000A;<span class="ruby-keyword">end</span></pre>
                 </div>
               </div>
               <div class='method public-instance' id='method-method-i-download-21'>
@@ -301,8 +301,8 @@
                   
                   <pre>scp.download!(&quot;/remote/path&quot;, &quot;/local/path&quot;)</pre>
                   
-                  <p>If <code>local</code> is nil, and the download is not recursive (e.g., it
-                  is downloading only a single file), the file will be downloaded to an
+                  <p>If <tt>local</tt> is nil, and the download is not recursive (e.g., it is
+                  downloading only a single file), the file will be downloaded to an
                   in-memory buffer and the resulting string returned.</p>
                   
                   <pre>data = download!(&quot;/remote/path&quot;)</pre>
@@ -311,7 +311,7 @@
                   <a class='source-toggle' href='#' onclick="toggleCode('method-i-download-21-source'); return false">
                     [show source]
                   </a>
-                  <pre id='method-i-download-21-source'><span class="ruby-comment"># File lib/net/scp.rb, line 314</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-identifier">download!</span>(<span class="ruby-identifier">remote</span>, <span class="ruby-identifier">local</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">options</span>={}, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-identifier">destination</span> = <span class="ruby-identifier">local</span> <span class="ruby-operator">?</span> <span class="ruby-identifier">local</span> <span class="ruby-operator">:</span> <span class="ruby-constant">StringIO</span>.<span class="ruby-identifier">new</span>&#x000A;  <span class="ruby-identifier">download</span>(<span class="ruby-identifier">remote</span>, <span class="ruby-identifier">destination</span>, <span class="ruby-identifier">options</span>, &amp;<span class="ruby-identifier">progress</span>).<span class="ruby-identifier">wait</span>&#x000A;  <span class="ruby-identifier">local</span> <span class="ruby-operator">?</span> <span class="ruby-keyword">true</span> <span class="ruby-operator">:</span> <span class="ruby-identifier">destination</span>.<span class="ruby-identifier">string</span>&#x000A;<span class="ruby-keyword">end</span></pre>
+                  <pre id='method-i-download-21-source'><span class="ruby-comment"># File lib/net/scp.rb, line 319</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-identifier">download!</span>(<span class="ruby-identifier">remote</span>, <span class="ruby-identifier">local</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">options</span>={}, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-identifier">destination</span> = <span class="ruby-identifier">local</span> <span class="ruby-operator">?</span> <span class="ruby-identifier">local</span> <span class="ruby-operator">:</span> <span class="ruby-constant">StringIO</span>.<span class="ruby-identifier">new</span>&#x000A;  <span class="ruby-identifier">download</span>(<span class="ruby-identifier">remote</span>, <span class="ruby-identifier">destination</span>, <span class="ruby-identifier">options</span>, &amp;<span class="ruby-identifier">progress</span>).<span class="ruby-identifier">wait</span>&#x000A;  <span class="ruby-identifier">local</span> <span class="ruby-operator">?</span> <span class="ruby-keyword">true</span> <span class="ruby-operator">:</span> <span class="ruby-identifier">destination</span>.<span class="ruby-identifier">string</span>&#x000A;<span class="ruby-keyword">end</span></pre>
                 </div>
               </div>
               <div class='method public-instance' id='method-method-i-upload'>
@@ -322,12 +322,12 @@
                 </div>
                 <div class='description'>
                   
-                  <p>Inititiate a synchronous (non-blocking) upload from <code>local</code> to
-                  <code>remote</code>. The following options are recognized:</p>
+                  <p>Inititiate a synchronous (non-blocking) upload from <tt>local</tt> to
+                  <tt>remote</tt>. The following options are recognized:</p>
                   <ul><li>
-                  <p>:recursive - the <code>local</code> parameter refers to a local directory,
-                  which should be uploaded to a new directory named <code>remote</code> on
-                  the remote server.</p>
+                  <p>:recursive - the <tt>local</tt> parameter refers to a local directory,
+                  which should be uploaded to a new directory named <tt>remote</tt> on the
+                  remote server.</p>
                   </li><li>
                   <p>:preserve - the atime and mtime of the file should be preserved.</p>
                   </li><li>
@@ -351,7 +351,7 @@
                   <a class='source-toggle' href='#' onclick="toggleCode('method-i-upload-source'); return false">
                     [show source]
                   </a>
-                  <pre id='method-i-upload-source'><span class="ruby-comment"># File lib/net/scp.rb, line 271</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-identifier">upload</span>(<span class="ruby-identifier">local</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">options</span>={}, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-identifier">start_command</span>(<span class="ruby-value">:upload</span>, <span class="ruby-identifier">local</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">options</span>, &amp;<span class="ruby-identifier">progress</span>)&#x000A;<span class="ruby-keyword">end</span></pre>
+                  <pre id='method-i-upload-source'><span class="ruby-comment"># File lib/net/scp.rb, line 276</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-identifier">upload</span>(<span class="ruby-identifier">local</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">options</span>={}, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-identifier">start_command</span>(<span class="ruby-value">:upload</span>, <span class="ruby-identifier">local</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">options</span>, &amp;<span class="ruby-identifier">progress</span>)&#x000A;<span class="ruby-keyword">end</span></pre>
                 </div>
               </div>
               <div class='method public-instance' id='method-method-i-upload-21'>
@@ -371,7 +371,7 @@
                   <a class='source-toggle' href='#' onclick="toggleCode('method-i-upload-21-source'); return false">
                     [show source]
                   </a>
-                  <pre id='method-i-upload-21-source'><span class="ruby-comment"># File lib/net/scp.rb, line 278</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-identifier">upload!</span>(<span class="ruby-identifier">local</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">options</span>={}, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-identifier">upload</span>(<span class="ruby-identifier">local</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">options</span>, &amp;<span class="ruby-identifier">progress</span>).<span class="ruby-identifier">wait</span>&#x000A;<span class="ruby-keyword">end</span></pre>
+                  <pre id='method-i-upload-21-source'><span class="ruby-comment"># File lib/net/scp.rb, line 283</span>&#x000A;<span class="ruby-keyword">def</span> <span class="ruby-identifier">upload!</span>(<span class="ruby-identifier">local</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">options</span>={}, &amp;<span class="ruby-identifier">progress</span>)&#x000A;  <span class="ruby-identifier">upload</span>(<span class="ruby-identifier">local</span>, <span class="ruby-identifier">remote</span>, <span class="ruby-identifier">options</span>, &amp;<span class="ruby-identifier">progress</span>).<span class="ruby-identifier">wait</span>&#x000A;<span class="ruby-keyword">end</span></pre>
                 </div>
               </div>
             </div>

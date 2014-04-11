@@ -25,24 +25,24 @@
   <body class='page'>
     <div class='file' id='wrapper'>
       <div class='header'>
-        <h1 class='name'>README.rdoc</h1>
+        <div class='name'>README.rdoc</div>
         <div class='paths'>
           README.rdoc
         </div>
         <div class='last-update'>
           Last Update:
-          <span class='datetime'>2013-07-06 08:56:09 -0700</span>
+          <span class='datetime'>2014-04-11 12:41:57 -0400</span>
         </div>
       </div>
       <div id='content'>
         <div id='text'>
           <div id='description'>
             
-            <h1 id="label-Net%3A%3ASCP"><a href="../classes/Net/SCP.html">Net::SCP</a></h1>
+            <h1><a href="../classes/Net/SCP.html">Net::SCP</a></h1>
             
-            <p><strong><em>Please note: this project is in maintenance mode. It is not
-            under active development but pull requests are very much welcome. Just be
-            sure to include tests! -- delano</em></strong></p>
+            <p><b><em>Please note: this project is in maintenance mode. It is not under
+            active development but pull requests are very much welcome. Just be sure to
+            include tests! -- delano</em></b></p>
             <ul><li>
             <p>Docs: <a
             href="http://net-ssh.github.com/net-scp">net-ssh.github.com/net-scp</a></p>
@@ -58,14 +58,14 @@
             
             <p><em>As of v1.0.5, all gem releases are signed. See INSTALL.</em></p>
             
-            <h2 id="label-DESCRIPTION%3A">DESCRIPTION:</h2>
+            <h2>DESCRIPTION:</h2>
             
             <p><a href="../classes/Net/SCP.html">Net::SCP</a> is a pure-Ruby
             implementation of the SCP protocol. This operates over SSH (and requires
             the <a href="../classes/Net/SSH.html">Net::SSH</a> library), and allows
             files and directory trees to copied to and from a remote server.</p>
             
-            <h2 id="label-FEATURES%2FPROBLEMS%3A">FEATURES/PROBLEMS:</h2>
+            <h2>FEATURES/PROBLEMS:</h2>
             <ul><li>
             <p>Transfer files or entire directory trees to or from a remote host via SCP</p>
             </li><li>
@@ -76,15 +76,15 @@
             <p>Support for SCP URI's, and OpenURI</p>
             </li></ul>
             
-            <h2 id="label-SYNOPSIS%3A">SYNOPSIS:</h2>
+            <h2>SYNOPSIS:</h2>
             
             <p>In a nutshell:</p>
             
-            <pre class="ruby"><span class="ruby-identifier">require</span> <span class="ruby-string">'net/scp'</span>&#x000A;&#x000A;<span class="ruby-comment"># upload a file to a remote server</span>&#x000A;<span class="ruby-constant">Net</span><span class="ruby-operator">::</span><span class="ruby-constant">SCP</span>.<span class="ruby-identifier">upload!</span>(<span class="ruby-string">&quot;remote.host.com&quot;</span>, <span class="ruby-string">&quot;username&quot;</span>,&#x000A;  <span class="ruby-string">&quot;/local/path&quot;</span>, <span class="ruby-string">&quot;/remote/path&quot;</span>,&#x000A;  :<span class="ruby-identifier">ssh</span> =<span class="ruby-operator">&gt;</span> { :<span class="ruby-identifier">password</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-string">&quot;password&quot;</span> })&#x000A;&#x000A;<span class="ruby-comment"># download a file from a remote server</span>&#x000A;<span class="ruby-constant">Net</span><span class="ruby-operator">::</span><span class="ruby-constant">SCP</span>.<span class="ruby-identifier">download!</span>(<span class="ruby-string">&quot;remote.host.com&quot;</span>, <span class="ruby-string">&quot;username&quot;</span>,&#x000A;  <span class="ruby-string">&quot;/remote/path&quot;</span>, <span class="ruby-string">&quot;/local/path&quot;</span>,&#x000A;  :<span class="ruby-identifier">ssh</span> =<span class="ruby-operator">&gt;</span> { :<span class="ruby-identifier">password</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-string">&quot;password&quot;</span> })&#x000A;&#x000A;<span class="ruby-comment"># download a file to an in-memory buffer</span>&#x000A;<span class="ruby-identifier">data</span> = <span class="ruby-constant">Net</span><span class="ruby-operator">::</span><span class="ruby-constant">SCP</span><span class="ruby-operator">::</span><span class="ruby-identifier">download!</span>(<span class="ruby-string">&quot;remote.host.com&quot;</span>, <span class="ruby-string">&quot;username&quot;</span>, <span class="ruby-string">&quot;/remote/path&quot;</span>)&#x000A;&#x000A;<span class="ruby-comment"># use a persistent connection to transfer files</span>&#x000A;<span class="ruby-constant">Net</span><span class="ruby-operator">::</span><span class="ruby-constant">SCP</span>.<span class="ruby-identifier">start</span>(<span class="ruby-string">&quot;remote.host.com&quot;</span>, <span class="ruby-string">&quot;username&quot;</span>, :<span class="ruby-identifier">ssh</span> =<span class="ruby-operator">&gt;</span> { :<span class="ruby-identifier">password</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-string">&quot;password&quot;</span> }) <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">scp</span><span class="ruby-operator">|</span>&#x000A;  <span class="ruby-comment"># upload a file to a remote server</span>&#x000A;  <span class="ruby-identifier">scp</span>.<span class="ruby-identifier">upload!</span> <span class="ruby-string">&quot;/local/path&quot;</span>, <span class="ruby-string">&quot;/remote/path&quot;</span>&#x000A;&#x000A;  <span class="ruby-comment"># upload from an in-memory buffer</span>&#x000A;  <span class="ruby-identifier">scp</span>.<span class="ruby-identifier">upload!</span> <span class="ruby-constant">StringIO</span>.<span class="ruby-identifier">new</span>(<span class="ruby-string">&quot;some data to upload&quot;</span>), <span class="ruby-string">&quot;/remote/path&quot;</span>&#x000A;&#x000A;  <span class="ruby-comment"># run multiple downloads in parallel</span>&#x000A;  <span class="ruby-identifier">d1</span> = <span class="ruby-identifier">scp</span>.<span class="ruby-identifier">download</span>(<span class="ruby-string">&quot;/remote/path&quot;</span>, <span class="ruby-string">&quot;/local/path&quot;</span>)&#x000A;  <span class="ruby-identifier">d2</span> = <span class="ruby-identifier">scp</span>.<span class="ruby-identifier">download</span>(<span class="ruby-string">&quot;/remote/path2&quot;</span>, <span class="ruby-string">&quot;/local/path2&quot;</span>)&#x000A;  [<span class="ruby-identifier">d1</span>, <span class="ruby-identifier">d2</span>].<span class="ruby-identifier">each</span> { <span class="ruby-operator">|</span><span class="ruby-identifier">d</span><span class="ruby-operator">|</span> <span class="ruby-identifier">d</span>.<span class="ruby-identifier">wait</span> }&#x000A;<span class="ruby-keyword">end</span>&#x000A;&#x000A;<span class="ruby-comment"># You can also use open-uri to grab data via scp:</span>&#x000A;<span class="ruby-identifier">require</span> <span class="ruby-string">'uri/open-scp'</span>&#x000A;<span class="ruby-identifier">data</span> = <span class="ruby-identifier">open</span>(<span class="ruby-string">&quot;scp://user@host/path/to/file.txt&quot;</span>).<span class="ruby-identifier">read</span></pre>
+            <pre>require 'net/scp'&#x000A;# upload a file to a remote server&#x000A;Net::SCP.upload!(&quot;remote.host.com&quot;, &quot;username&quot;,&#x000A;  &quot;/local/path&quot;, &quot;/remote/path&quot;,&#x000A;  :ssh =&gt; { :password =&gt; &quot;password&quot; })&#x000A;&#x000A;# download a file from a remote server&#x000A;Net::SCP.download!(&quot;remote.host.com&quot;, &quot;username&quot;,&#x000A;  &quot;/remote/path&quot;, &quot;/local/path&quot;,&#x000A;  :ssh =&gt; { :password =&gt; &quot;password&quot; })&#x000A;&#x000A;# download a file to an in-memory buffer&#x000A;data = Net::SCP::download!(&quot;remote.host.com&quot;, &quot;username&quot;, &quot;/remote/path&quot;)&#x000A;&#x000A;# use a persistent connection to transfer files&#x000A;Net::SCP.start(&quot;remote.host.com&quot;, &quot;username&quot;, :ssh =&gt; { :password =&gt; &quot;password&quot; }) do |scp|&#x000A;  # upload a file to a remote server&#x000A;  scp.upload! &quot;/local/path&quot;, &quot;/remote/path&quot;&#x000A;&#x000A;  # upload from an in-memory buffer&#x000A;  scp.upload! StringIO.new(&quot;some data to upload&quot;), &quot;/remote/path&quot;&#x000A;&#x000A;  # run multiple downloads in parallel&#x000A;  d1 = scp.download(&quot;/remote/path&quot;, &quot;/local/path&quot;)&#x000A;  d2 = scp.download(&quot;/remote/path2&quot;, &quot;/local/path2&quot;)&#x000A;  [d1, d2].each { |d| d.wait }&#x000A;end&#x000A;&#x000A;# You can also use open-uri to grab data via scp:&#x000A;require 'uri/open-scp'&#x000A;data = open(&quot;scp://user@host/path/to/file.txt&quot;).read</pre>
             
             <p>For more information, see <a href="../classes/Net/SCP.html">Net::SCP</a>.</p>
             
-            <h2 id="label-REQUIREMENTS%3A">REQUIREMENTS:</h2>
+            <h2>REQUIREMENTS:</h2>
             <ul><li>
             <p><a href="../classes/Net/SSH.html">Net::SSH</a> 2</p>
             </li></ul>
@@ -96,7 +96,7 @@
             <p>Mocha (for tests)</p>
             </li></ul>
             
-            <h2 id="label-INSTALL%3A">INSTALL:</h2>
+            <h2>INSTALL:</h2>
             <ul><li>
             <p>gem install net-scp (might need sudo privileges)</p>
             </li></ul>
@@ -128,7 +128,7 @@
             <p>ruby setup.rb install (might need sudo privileges)</p>
             </li></ul>
             
-            <h2 id="label-LICENSE%3A">LICENSE:</h2>
+            <h2>LICENSE:</h2>
             
             <p>(The MIT License)</p>
             
