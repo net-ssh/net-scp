@@ -37,7 +37,13 @@ module Net; class SCP
 
       directive = parse_directive(line)
       case directive[:type]
-      when :times then
+      when :OK
+        return
+      when :warning
+        channel[:error_string] << directive[:message]
+      when :error
+        channel[:error_string] << directive[:message]
+      when :times
         channel[:times] = directive
       when :directory
         read_directory(channel, directive)
@@ -87,6 +93,15 @@ module Net; class SCP
     # data.
     def parse_directive(text)
       case type = text[0]
+      when "\x00"
+        # Success
+        { :type => :OK }
+      when "\x01"
+        { :type => :warning,
+          :message => text[1..-1] }
+      when "\x02"
+        { :type => :error,
+          :message => text[1..-1] }
       when ?T
         parts = text[1..-1].split(/ /, 4).map { |i| i.to_i }
         { :type  => :times,
