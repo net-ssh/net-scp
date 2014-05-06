@@ -266,4 +266,15 @@ class TestUpload < Net::SCP::TestCase
     story { |s| s.opens_channel(false) }
     assert_scripted { scp.upload("/path/to/local.txt", "/path/to/remote.txt") }
   end
+
+  def test_upload_should_raise_error_if_gets_not_ok
+    prepare_file("/path/to/local.txt", "")
+
+    expect_scp_session "-t /path/to/remote.txt" do |channel|
+      channel.gets_data "\1"
+    end
+
+    e = assert_raises(Net::SCP::Error) { scp.upload!("/path/to/local.txt", "/path/to/remote.txt") }
+    assert_equal("\1", e.message)
+  end
 end
