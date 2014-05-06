@@ -129,7 +129,7 @@ module Net; class SCP
       channel[:local] = File.join(channel[:local], directive[:name])
 
       if File.exists?(channel[:local]) && !File.directory?(channel[:local])
-        raise "#{channel[:local]} already exists and is not a directory"
+        raise Net::SCP::Error, "#{channel[:local]} already exists and is not a directory"
       elsif !File.exists?(channel[:local])
         Dir.mkdir(channel[:local], directive[:mode] | 0700)
       end

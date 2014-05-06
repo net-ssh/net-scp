@@ -158,6 +158,37 @@ class TestDownload < Net::SCP::TestCase
     assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote") }
   end
 
+  def test_download_should_raise_error_if_gets_not_ok
+    prepare_file("/path/to/local.txt", "")
+
+    expect_scp_session "-f /path/to/remote.txt" do |channel|
+      channel.sends_ok
+      channel.gets_data "C0666 0 remote.txt\n"
+      channel.sends_ok
+      channel.gets_data "\1"
+    end
+
+    e = assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote.txt", "/path/to/local.txt") }
+    assert_equal("\1", e.message)
+  end
+
+  def test_download_directory_should_raise_error_if_local_exists_and_is_not_directory
+    File.stubs(:exists?).with("/path/to/local").returns(true)
+    File.stubs(:exists?).with("/path/to/local/remote").returns(true)
+    File.stubs(:directory?).with("/path/to/local/remote").returns(false)
+
+    expect_scp_session "-f -r /path/to/remote" do |channel|
+      channel.sends_ok
+      channel.gets_data "D0755 0 remote\n"
+      channel.sends_ok
+      channel.gets_data "E\n"
+      channel.sends_ok
+    end
+
+    e = assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote", "/path/to/local", :recursive => true) }
+    assert_match(/exists and is not a directory/, e.message)
+  end
+
   def test_download_directory_should_create_directory_and_files_locally
     file = nil
     prepare_directory "/path/to/local" do |dir|

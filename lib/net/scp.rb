@@ -395,7 +395,7 @@ module Net
       def await_response_state(channel)
         return if channel[:buffer].available == 0
         c = channel[:buffer].read_byte
-        raise "#{c.chr}#{channel[:buffer].read}" if c != 0
+        raise Net::SCP::Error, "#{c.chr}#{channel[:buffer].read}" if c != 0
         channel[:next], channel[:state] = nil, channel[:next]
         send("#{channel[:state]}_state", channel)
       end
