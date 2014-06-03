@@ -317,7 +317,7 @@ module Net
     #
     #   data = download!("/remote/path")
     def download!(remote, local=nil, options={}, &progress)
-      destination = local ? local : StringIO.new
+      destination = local ? local : StringIO.new.tap { |io| io.set_encoding('BINARY') }
       download(remote, destination, options, &progress).wait
       local ? true : destination.string
     end
