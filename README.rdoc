@@ -42,7 +42,7 @@ In a nutshell:
   data = Net::SCP::download!("remote.host.com", "username", "/remote/path")
 
   # use a persistent connection to transfer files
-  Net::SCP.start("remote.host.com", "username", :ssh => { :password => "password" }) do |scp|
+  Net::SCP.start("remote.host.com", "username", :password => "password") do |scp|
     # upload a file to a remote server
     scp.upload! "/local/path", "/remote/path"
 
