@@ -32,6 +32,10 @@ In a nutshell:
   Net::SCP.upload!("remote.host.com", "username",
     "/local/path", "/remote/path",
     :ssh => { :password => "password" })
+  
+  # upload recursively
+  Net::SCP.upload!("remote.host", "username", "/path/to/local", "/path/to/remote",
+     :ssh => { :password => "foo" }, :recursive => true)
 
   # download a file from a remote server
   Net::SCP.download!("remote.host.com", "username",
