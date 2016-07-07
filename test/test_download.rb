@@ -179,8 +179,8 @@ class TestDownload < Net::SCP::TestCase
   end
 
   def test_download_directory_should_raise_error_if_local_exists_and_is_not_directory
-    File.stubs(:exists?).with("/path/to/local").returns(true)
-    File.stubs(:exists?).with("/path/to/local/remote").returns(true)
+    File.stubs(:exist?).with("/path/to/local").returns(true)
+    File.stubs(:exist?).with("/path/to/local/remote").returns(true)
     File.stubs(:directory?).with("/path/to/local/remote").returns(false)
 
     expect_scp_session "-f -r /path/to/remote" do |channel|

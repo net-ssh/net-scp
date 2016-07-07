@@ -20,7 +20,7 @@ module Net; class SCP
       elsif channel[:local].respond_to?(:write) && channel[:options][:preserve]
         lwarn { ":preserve option is ignored when downloading to an in-memory buffer" }
         channel[:options].delete(:preserve)
-      elsif channel[:options][:recursive] && !File.exists?(channel[:local])
+      elsif channel[:options][:recursive] && !File.exist?(channel[:local])
         Dir.mkdir(channel[:local])
       end
 
@@ -128,9 +128,9 @@ module Net; class SCP
 
       channel[:local] = File.join(channel[:local], directive[:name])
 
-      if File.exists?(channel[:local]) && !File.directory?(channel[:local])
+      if File.exist?(channel[:local]) && !File.directory?(channel[:local])
         raise Net::SCP::Error, "#{channel[:local]} already exists and is not a directory"
-      elsif !File.exists?(channel[:local])
+      elsif !File.exist?(channel[:local])
         Dir.mkdir(channel[:local], directive[:mode] | 0700)
       end
 
