@@ -194,7 +194,7 @@ module Net
     include Net::SSH::Loggable
     include Upload, Download
 
-    # Starts up a new SSH connection and instantiates a new SCP session on 
+    # Starts up a new SSH connection and instantiates a new SCP session on
     # top of it. If a block is given, the SCP session is yielded, and the
     # SSH session is closed automatically when the block terminates. If no
     # block is given, the SCP session is returned.
@@ -293,7 +293,7 @@ module Net
     # * :preserve - the atime and mtime of the file should be preserved.
     # * :verbose - the process should result in verbose output on the server
     #   end (useful for debugging).
-    # 
+    #
     # This method will return immediately, returning the Net::SSH::Connection::Channel
     # object that will support the download. To wait for the download to finish,
     # you can either call the #wait method on the channel, or otherwise run
@@ -343,12 +343,16 @@ module Net
       # (See Net::SCP::Upload and Net::SCP::Download).
       def start_command(mode, local, remote, options={}, &callback)
         session.open_channel do |channel|
-        
-          if options[:shell]
-            escaped_file = shellescape(remote).gsub(/'/) { |m| "'\\''" }
-            command = "#{options[:shell]} -c '#{scp_command(mode, options)} #{escaped_file}'"
+
+          if options[:windows_path]
+            command = "#{scp_command(mode, options)} \"#{remote}\""
           else
-            command = "#{scp_command(mode, options)} #{shellescape remote}"
+            if options[:shell]
+              escaped_file = shellescape(remote).gsub(/'/) { |m| "'\\''" }
+              command = "#{options[:shell]} -c '#{scp_command(mode, options)} #{escaped_file}'"
+            else
+              command = "#{scp_command(mode, options)} #{shellescape remote}"
+            end
           end
 
           channel.exec(command) do |ch, success|
