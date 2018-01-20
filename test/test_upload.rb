@@ -156,7 +156,9 @@ class TestUpload < Net::SCP::TestCase
       channel.gets_ok
     end
 
-    assert_raises(Net::SCP::Error) { scp.upload!("/path/to/local", "/path/to/remote") }
+    Net::SSH::Test::Extensions::IO.with_test_extension do
+      assert_raises(Net::SCP::Error) { scp.upload!("/path/to/local", "/path/to/remote") }
+    end
   end
 
   def test_upload_empty_directory_should_create_directory_and_finish
@@ -273,8 +275,9 @@ class TestUpload < Net::SCP::TestCase
     expect_scp_session "-t /path/to/remote.txt" do |channel|
       channel.gets_data "\1"
     end
-
-    e = assert_raises(Net::SCP::Error) { scp.upload!("/path/to/local.txt", "/path/to/remote.txt") }
-    assert_equal("\1", e.message)
+    Net::SSH::Test::Extensions::IO.with_test_extension do
+      e = assert_raises(Net::SCP::Error) { scp.upload!("/path/to/local.txt", "/path/to/remote.txt") }
+      assert_equal("\1", e.message)
+    end
   end
 end
