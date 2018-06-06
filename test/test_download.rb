@@ -11,9 +11,9 @@ class TestDownload < Net::SCP::TestCase
     assert_scripted { scp.download!("/path/to/remote.txt", "/path/to/local.txt") }
     assert_equal "a" * 1234, file.io.string
   end
-  
+
   def test_download_file_with_spaces_in_name_should_escape_remote_file_name
-    file = prepare_file("/path/to/local file.txt", "")
+    _file = prepare_file("/path/to/local file.txt", "")
 
     expect_scp_session "-f /path/to/remote\\ file.txt" do |channel|
       channel.sends_ok
@@ -25,9 +25,9 @@ class TestDownload < Net::SCP::TestCase
 
     assert_scripted { scp.download!("/path/to/remote file.txt", "/path/to/local file.txt") }
   end
-  
+
   def test_download_file_with_metacharacters_in_name_should_escape_remote_file_name
-    file = prepare_file("/path/to/local/#{awful_file_name}", "")
+    _file = prepare_file("/path/to/local/#{awful_file_name}", "")
 
     expect_scp_session "-f /path/to/remote/#{escaped_file_name}" do |channel|
       channel.sends_ok
@@ -179,8 +179,8 @@ class TestDownload < Net::SCP::TestCase
   end
 
   def test_download_directory_should_raise_error_if_local_exists_and_is_not_directory
-    File.stubs(:exists?).with("/path/to/local").returns(true)
-    File.stubs(:exists?).with("/path/to/local/remote").returns(true)
+    File.stubs(:exist?).with("/path/to/local").returns(true)
+    File.stubs(:exist?).with("/path/to/local/remote").returns(true)
     File.stubs(:directory?).with("/path/to/local/remote").returns(false)
 
     expect_scp_session "-f -r /path/to/remote" do |channel|
