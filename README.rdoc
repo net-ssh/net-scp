@@ -13,7 +13,7 @@
 
 == DESCRIPTION:
 
-Net::SCP is a pure-Ruby implementation of the SCP protocol. This operates over SSH (and requires the Net::SSH library), and allows files and directory trees to copied to and from a remote server.
+Net::SCP is a pure-Ruby implementation of the SCP protocol. This operates over SSH (and requires the Net::SSH library), and allows files and directory trees to be copied to and from a remote server.
 
 == FEATURES/PROBLEMS:
 
@@ -74,7 +74,7 @@ If you wish to run the tests, you'll also need:
 
 * gem install net-scp (might need sudo privileges)
 
-However, in order to be sure the code you're installing hasn't been tampered with, it's recommended that you verify the signiture[http://docs.rubygems.org/read/chapter/21]. To do this, you need to add my public key as a trusted certificate (you only need to do this once):
+However, in order to be sure the code you're installing hasn't been tampered with, it's recommended that you verify the signiture[http://docs.seattlerb.org/rubygems/Gem/Security.html]. To do this, you need to add my public key as a trusted certificate (you only need to do this once):
 
     # Add the public key as a trusted certificate
     # (You only need to do this once)
@@ -86,7 +86,6 @@ Then, when install the gem, do so with high security:
     $ gem install net-scp -P HighSecurity
 
 If you don't add the public key, you'll see an error like "Couldn't verify data signature". If you're still having trouble let me know and I'll give you a hand.
-
 
 Or, you can do it the hard way (without Rubygems):
 

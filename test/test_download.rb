@@ -11,9 +11,9 @@ class TestDownload < Net::SCP::TestCase
     assert_scripted { scp.download!("/path/to/remote.txt", "/path/to/local.txt") }
     assert_equal "a" * 1234, file.io.string
   end
-  
+
   def test_download_file_with_spaces_in_name_should_escape_remote_file_name
-    file = prepare_file("/path/to/local file.txt", "")
+    _file = prepare_file("/path/to/local file.txt", "")
 
     expect_scp_session "-f /path/to/remote\\ file.txt" do |channel|
       channel.sends_ok
@@ -25,9 +25,9 @@ class TestDownload < Net::SCP::TestCase
 
     assert_scripted { scp.download!("/path/to/remote file.txt", "/path/to/local file.txt") }
   end
-  
+
   def test_download_file_with_metacharacters_in_name_should_escape_remote_file_name
-    file = prepare_file("/path/to/local/#{awful_file_name}", "")
+    _file = prepare_file("/path/to/local/#{awful_file_name}", "")
 
     expect_scp_session "-f /path/to/remote/#{escaped_file_name}" do |channel|
       channel.sends_ok
@@ -70,12 +70,12 @@ class TestDownload < Net::SCP::TestCase
     end
 
     error = nil
-    assert_scripted do
-      begin
-        scp.download!("/path/to/remote.txt")
-      rescue
-        error = $!
-      end
+    Net::SSH::Test::Extensions::IO.with_test_extension do
+    begin
+      scp.download!("/path/to/remote.txt")
+    rescue
+      error = $!
+    end
     end
     assert_equal Net::SCP::Error, error.class
     assert_equal "SCP did not finish successfully (1): File not found: /path/to/remote.txt\n", error.message
@@ -116,7 +116,9 @@ class TestDownload < Net::SCP::TestCase
 
   def test_download_io_with_recursive_should_raise_error
     expect_scp_session "-f -r /path/to/remote.txt"
-    assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote.txt", StringIO.new, :recursive => true) }
+    Net::SSH::Test::Extensions::IO.with_test_extension do
+      assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote.txt", StringIO.new, :recursive => true) }
+    end
   end
 
   def test_download_io_with_preserve_should_ignore_preserve
@@ -155,7 +157,9 @@ class TestDownload < Net::SCP::TestCase
       channel.gets_data "D0755 0 remote\n"
     end
 
-    assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote") }
+    Net::SSH::Test::Extensions::IO.with_test_extension do
+      assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote") }
+    end
   end
 
   def test_download_should_raise_error_if_gets_not_ok
@@ -168,13 +172,15 @@ class TestDownload < Net::SCP::TestCase
       channel.gets_data "\1"
     end
 
-    e = assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote.txt", "/path/to/local.txt") }
-    assert_equal("\1", e.message)
+    Net::SSH::Test::Extensions::IO.with_test_extension do
+      e = assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote.txt", "/path/to/local.txt") }
+      assert_equal("\1", e.message)
+    end
   end
 
   def test_download_directory_should_raise_error_if_local_exists_and_is_not_directory
-    File.stubs(:exists?).with("/path/to/local").returns(true)
-    File.stubs(:exists?).with("/path/to/local/remote").returns(true)
+    File.stubs(:exist?).with("/path/to/local").returns(true)
+    File.stubs(:exist?).with("/path/to/local/remote").returns(true)
     File.stubs(:directory?).with("/path/to/local/remote").returns(false)
 
     expect_scp_session "-f -r /path/to/remote" do |channel|
@@ -185,8 +191,10 @@ class TestDownload < Net::SCP::TestCase
       channel.sends_ok
     end
 
-    e = assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote", "/path/to/local", :recursive => true) }
-    assert_match(/exists and is not a directory/, e.message)
+    Net::SSH::Test::Extensions::IO.with_test_extension do
+      e = assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote", "/path/to/local", :recursive => true) }
+      assert_match(/exists and is not a directory/, e.message)
+    end
   end
 
   def test_download_directory_should_create_directory_and_files_locally
@@ -211,7 +219,9 @@ class TestDownload < Net::SCP::TestCase
       channel.sends_ok
     end
 
-    scp.download!("/path/to/remote", "/path/to/local", :recursive => true, :ssh => { :verbose => :debug })
+    Net::SSH::Test::Extensions::IO.with_test_extension do
+      scp.download!("/path/to/remote", "/path/to/local", :recursive => true, :ssh => { :verbose => :debug })
+    end
     assert_equal "a" * 1234, file.io.string
   end
 
