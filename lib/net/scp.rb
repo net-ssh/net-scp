@@ -345,7 +345,7 @@ module Net
         session.open_channel do |channel|
 
           if options[:windows_path]
-            command = "#{scp_command(mode, options)} \"#{remote.gsub('\\', '/')}\""
+            command = "#{scp_command(mode, options)} #{remote.gsub('\\', '/')}"
           else
             if options[:shell]
               escaped_file = shellescape(remote).gsub(/'/) { |m| "'\\''" }
