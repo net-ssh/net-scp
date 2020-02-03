@@ -39,7 +39,6 @@ if false
     Jeweler::Tasks.new do |s|
       s.version = version
       s.name = name
-      s.rubyforge_project = s.name
       s.summary = "A pure Ruby implementation of the SCP client protocol"
       s.description = s.summary
       s.email = "net-ssh@solutious.com"
