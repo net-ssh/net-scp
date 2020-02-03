@@ -74,14 +74,14 @@ If you wish to run the tests, you'll also need:
 
 * gem install net-scp (might need sudo privileges)
 
-However, in order to be sure the code you're installing hasn't been tampered with, it's recommended that you verify the signiture[http://docs.seattlerb.org/rubygems/Gem/Security.html]. To do this, you need to add my public key as a trusted certificate (you only need to do this once):
+However, in order to be sure the code you're installing hasn't been tampered with, it's recommended that you verify the signature[http://docs.seattlerb.org/rubygems/Gem/Security.html]. To do this, you need to add my public key as a trusted certificate (you only need to do this once):
 
     # Add the public key as a trusted certificate
     # (You only need to do this once)
     $ curl -O https://raw.githubusercontent.com/net-ssh/net-ssh/master/net-ssh-public_cert.pem
     $ gem cert --add net-ssh-public_cert.pem
 
-Then, when install the gem, do so with high security:
+Then- when installing the gem - do so with high security:
 
     $ gem install net-scp -P HighSecurity
 
