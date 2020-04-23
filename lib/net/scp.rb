@@ -334,6 +334,7 @@ module Net
         command << " -v" if options[:verbose]
         command << " -r" if options[:recursive]
         command << " -p" if options[:preserve]
+        command << " -l #{options[:limit]}" if options[:limit]
         command
       end
 
