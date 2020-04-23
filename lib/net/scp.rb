@@ -335,6 +335,7 @@ module Net
         command << " -r" if options[:recursive]
         command << " -p" if options[:preserve]
         command << " -l #{options[:limit]}" if options[:limit]
+        puts command
         command
       end
 
@@ -351,7 +352,8 @@ module Net
           else
             command = "#{scp_command(mode, options)} #{shellescape remote}"
           end
-
+          puts command
+          
           channel.exec(command) do |ch, success|
             if success
               channel[:local   ] = local
