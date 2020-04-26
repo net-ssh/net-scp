@@ -21,8 +21,11 @@ module Net; class SCP
       end
 
       channel[:chunk_size] = channel[:options][:chunk_size] || DEFAULT_CHUNK_SIZE
-      set_current(channel, channel[:local])
-      await_response(channel, :upload_current)
+      if set_current(channel, channel[:local])
+        await_response(channel, :upload_current)
+      else
+        next_item_state(channel)
+      end
     end
 
     # Determines what the next thing to upload is, and branches. If the next
@@ -100,8 +103,11 @@ module Net; class SCP
           channel.send_data("E\n")
           await_response(channel, channel[:stack].empty? ? :finish : :next_item)
         else
-          set_current(channel, next_item)
-          upload_current_state(channel)
+          if set_current(channel, next_item)
+            upload_current_state(channel)
+          else
+            next_item_state(channel)
+          end
         end
       end
     end
@@ -113,11 +119,14 @@ module Net; class SCP
 
       if channel[:current].respond_to?(:read)
         channel[:stat] = channel[:current].stat if channel[:current].respond_to?(:stat)
+      elsif File.symlink?(channel[:current])
+        return false
       else
         channel[:stat] = File.stat(channel[:current])
       end
 
       channel[:size] = channel[:stat] ? channel[:stat].size : channel[:current].size
+      return true
     end
 
     # If the :preserve option is set, send a 'T' directive and wait for the
