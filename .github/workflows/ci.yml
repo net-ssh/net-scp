@@ -1,0 +1,30 @@
+name: CI
+on:
+  pull_request:
+  push: { branches: master }
+jobs:
+  test:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        ruby-version: [2.3.8, 2.4.10, 2.5.9, 2.6.6, 2.7.6, 3.0.4, 3.1.2]
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Set up Ruby ${{ matrix.ruby-version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+
+      - name: Cache bundler
+        uses: actions/cache@v1
+        id: bundler-cache
+        with:
+          path: vendor/bundle
+          key: ${{ runner.os }}-${{ matrix.ruby-version }}-gem-v3-${{ hashFiles('**/Gemfile') }}-${{ hashFiles('**/net-scp.gemspec') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.ruby-version }}-gem-v3-
+      - name: Install dependencies
+        run: bundle install
+      - name: Run Tests
+        run: bundle exec rake test
