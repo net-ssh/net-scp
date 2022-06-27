@@ -1,5 +1,5 @@
 require 'test/unit'
-require 'mocha/setup'
+require 'mocha/test_unit'
 
 begin
   gem 'net-ssh', ">= 2.0.0"
