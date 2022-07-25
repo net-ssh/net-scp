@@ -46,7 +46,7 @@ module Net
       end
 
       # The major component of this version of the Net::SSH library
-      MAJOR = 3
+      MAJOR = 4
 
       # The minor component of this version of the Net::SSH library
       MINOR = 0
@@ -56,7 +56,7 @@ module Net
 
       # The prerelease component of this version of the Net::SSH library
       # nil allowed
-      PRE   = nil
+      PRE   = "rc1"
 
       # The current version of the Net::SSH library as a Version instance
       CURRENT = new(*[MAJOR, MINOR, TINY, PRE].compact)
