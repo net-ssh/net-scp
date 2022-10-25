@@ -31,5 +31,5 @@ module URI
     end
   end
 
-  @@schemes['SCP'] = SCP
+  register_scheme 'SCP', SCP
 end
