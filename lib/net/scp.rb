@@ -93,6 +93,8 @@ module Net
   #   be sent to indicate the modification and access times of each file.
   # * "-r" -- recursive transfers should be allowed. Without this, it is an
   #   error to upload or download a directory.
+  # * "-l" -- limit the speed of transfers. The value of :limit wil be use
+  #   as the value in the -l command.
   #
   # After those flags, the name of the remote file/directory should be passed
   # as the sole non-switch argument to scp.
@@ -265,6 +267,7 @@ module Net
     # * :chunk_size - the size of each "chunk" that should be sent. Defaults
     #   to 2048. Changing this value may improve throughput at the expense
     #   of decreasing interactivity.
+    # * :limit - Limits the speed of the transfer. Defaults no limit is set.
     #
     # This method will return immediately, returning the Net::SSH::Connection::Channel
     # object that will support the upload. To wait for the upload to finish,
@@ -293,6 +296,7 @@ module Net
     # * :preserve - the atime and mtime of the file should be preserved.
     # * :verbose - the process should result in verbose output on the server
     #   end (useful for debugging).
+    # * :limit - limit the speed of the transfer.
     #
     # This method will return immediately, returning the Net::SSH::Connection::Channel
     # object that will support the download. To wait for the download to finish,
@@ -326,7 +330,7 @@ module Net
 
       # Constructs the scp command line needed to initiate and SCP session
       # for the given +mode+ (:upload or :download) and with the given options
-      # (:verbose, :recursive, :preserve). Returns the command-line as a
+      # (:verbose, :recursive, :preserve, :limit). Returns the command-line as a
       # string, ready to execute.
       def scp_command(mode, options)
         command = "scp "
@@ -334,6 +338,7 @@ module Net
         command << " -v" if options[:verbose]
         command << " -r" if options[:recursive]
         command << " -p" if options[:preserve]
+        command << " -l #{options[:limit]}" if options[:limit]
         command
       end
 
