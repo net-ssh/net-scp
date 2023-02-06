@@ -114,6 +114,9 @@ Or, you can do it the hard way (without Rubygems):
 *   ruby setup.rb config
 *   ruby setup.rb install (might need sudo privileges)
 
+## Security contact information
+
+See [Security.md]
 
 ## LICENSE:
 
