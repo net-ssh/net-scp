@@ -30,44 +30,44 @@ to be copied to and from a remote server.
 
 In a nutshell:
 
-    ```ruby
-    require 'net/scp'
+```ruby
+require 'net/scp'
 
-    # upload a file to a remote server
-    Net::SCP.upload!("remote.host.com", "username",
-      "/local/path", "/remote/path",
-      :ssh => { :password => "password" })
+# upload a file to a remote server
+Net::SCP.upload!("remote.host.com", "username",
+  "/local/path", "/remote/path",
+  :ssh => { :password => "password" })
 
-    # upload recursively
-    Net::SCP.upload!("remote.host", "username", "/path/to/local", "/path/to/remote",
-       :ssh => { :password => "foo" }, :recursive => true)
+# upload recursively
+Net::SCP.upload!("remote.host", "username", "/path/to/local", "/path/to/remote",
+   :ssh => { :password => "foo" }, :recursive => true)
 
-    # download a file from a remote server
-    Net::SCP.download!("remote.host.com", "username",
-      "/remote/path", "/local/path",
-      :ssh => { :password => "password" })
+# download a file from a remote server
+Net::SCP.download!("remote.host.com", "username",
+  "/remote/path", "/local/path",
+  :ssh => { :password => "password" })
 
-    # download a file to an in-memory buffer
-    data = Net::SCP::download!("remote.host.com", "username", "/remote/path")
+# download a file to an in-memory buffer
+data = Net::SCP::download!("remote.host.com", "username", "/remote/path")
 
-    # use a persistent connection to transfer files
-    Net::SCP.start("remote.host.com", "username", :password => "password") do |scp|
-      # upload a file to a remote server
-      scp.upload! "/local/path", "/remote/path"
+# use a persistent connection to transfer files
+Net::SCP.start("remote.host.com", "username", :password => "password") do |scp|
+  # upload a file to a remote server
+  scp.upload! "/local/path", "/remote/path"
 
-      # upload from an in-memory buffer
-      scp.upload! StringIO.new("some data to upload"), "/remote/path"
+  # upload from an in-memory buffer
+  scp.upload! StringIO.new("some data to upload"), "/remote/path"
 
-      # run multiple downloads in parallel
-      d1 = scp.download("/remote/path", "/local/path")
-      d2 = scp.download("/remote/path2", "/local/path2")
-      [d1, d2].each { |d| d.wait }
-    end
+  # run multiple downloads in parallel
+  d1 = scp.download("/remote/path", "/local/path")
+  d2 = scp.download("/remote/path2", "/local/path2")
+  [d1, d2].each { |d| d.wait }
+end
 
-    # You can also use open-uri to grab data via scp:
-    require 'uri/open-scp'
-    data = open("scp://user@host/path/to/file.txt").read
-    ```
+# You can also use open-uri to grab data via scp:
+require 'uri/open-scp'
+data = open("scp://user@host/path/to/file.txt").read
+```
 
 For more information, see Net::SCP.
 
@@ -92,16 +92,16 @@ with, it's recommended that you verify the
 you need to add my public key as a trusted certificate (you only need to do
 this once):
 
-    ```sh
-    # Add the public key as a trusted certificate
-    # (You only need to do this once)
-    $ curl -O https://raw.githubusercontent.com/net-ssh/net-ssh/master/net-ssh-public_cert.pem
-    $ gem cert --add net-ssh-public_cert.pem
-    ```
+```sh
+# Add the public key as a trusted certificate
+# (You only need to do this once)
+$ curl -O https://raw.githubusercontent.com/net-ssh/net-ssh/master/net-ssh-public_cert.pem
+$ gem cert --add net-ssh-public_cert.pem
+```
 
 Then- when installing the gem - do so with high security:
 
-    `$ gem install net-scp -P HighSecurity`
+    $ gem install net-scp -P HighSecurity
 
 If you don't add the public key, you'll see an error like "Couldn't verify
 data signature". If you're still having trouble let me know and I'll give you
