@@ -116,7 +116,7 @@ Or, you can do it the hard way (without Rubygems):
 
 ## Security contact information
 
-See [Security.md]
+See [SECURITY.md](SECURITY.md)
 
 ## LICENSE:
 
