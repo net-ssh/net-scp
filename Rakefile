@@ -76,6 +76,6 @@ RDoc::Task.new do |rdoc|
   rdoc.rdoc_files.include("bin/*.rb")
   rdoc.rdoc_files.include("lib/**/*.rb")
   extra_files.each { |file|
-    rdoc.rdoc_files.include(file) if File.exists?(file)
+    rdoc.rdoc_files.include(file) if File.exist?(file)
   }
 end
