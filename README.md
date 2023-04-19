@@ -4,7 +4,7 @@
 development but pull requests are very much welcome. Just be sure to include
 tests! -- delano***
 
-*   Docs: http://net-ssh.github.com/net-scp
+*   Docs: http://net-ssh.github.io/net-scp
 *   Issues: https://github.com/net-ssh/net-scp/issues
 *   Codes: https://github.com/net-ssh/net-scp
 *   Email: net-ssh@solutious.com
