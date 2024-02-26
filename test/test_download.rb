@@ -244,13 +244,13 @@ class TestDownload < Net::SCP::TestCase
   end
 
   def test_download_should_raise_error_when_remote_closes_channel_before_end
-    file = prepare_file('/path/to/local.txt', 'a' * 1234)
+    prepare_file('/path/to/local.txt', 'a' * 1234)
 
     story do |session|
       channel = session.opens_channel
       channel.sends_exec 'scp -f /path/to/remote.txt'
       channel.sends_ok
-      channel.gets_data "C%04o 1234 remote.txt\n" % 0666
+      channel.gets_data "C0666 1234 remote.txt\n"
       channel.sends_ok
       channel.gets_data 'a' * 500
       # We should have received 1234 bytes and \0 but remote closed before the end
@@ -268,8 +268,7 @@ class TestDownload < Net::SCP::TestCase
     end
 
     assert_equal Net::SCP::Error, error.class
-    assert_equal 'SCP did not finish successfully (channel closed before end of transmission)',
-        error.message
+    assert_equal 'SCP did not finish successfully (channel closed before end of transmission)', error.message
   end
 
   private
