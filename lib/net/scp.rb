@@ -362,7 +362,18 @@ module Net
               channel[:stack   ] = []
               channel[:error_string] = ''
 
-              channel.on_close                  { |ch2| send("#{channel[:state]}_state", channel); raise Net::SCP::Error, "SCP did not finish successfully (#{channel[:exit]}): #{channel[:error_string]}" if channel[:exit] != 0 }
+              channel.on_close do
+                if channel[:exit].nil? && channel[:state] == :finish
+                  # The remote closed the channel without sending an eof, but
+                  # the transfer was successful, so whe set channel[:exit] to 0
+                  channel[:exit] = 0
+                end
+                send("#{channel[:state]}_state", channel)
+                if channel[:exit] != 0
+                  raise Net::SCP::Error, 'SCP did not finish successfully ' \
+                                         "(#{channel[:exit]}): #{channel[:error_string]}"
+                end
+              end
               channel.on_data                   { |ch2, data| channel[:buffer].append(data) }
               channel.on_extended_data          { |ch2, type, data| debug { data.chomp } }
               channel.on_request("exit-status") { |ch2, data| channel[:exit] = data.read_long }

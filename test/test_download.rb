@@ -225,6 +225,24 @@ class TestDownload < Net::SCP::TestCase
     assert_equal "a" * 1234, file.io.string
   end
 
+  def test_download_should_work_when_remote_closes_channel_without_eof
+    file = prepare_file('/path/to/local.txt', 'a' * 1234)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec 'scp -f /path/to/remote.txt'
+      simple_download(channel)
+      # Remote closes without sending an eof
+      channel.gets_close
+      # We are polite and send an eof & close the channel
+      channel.sends_eof
+      channel.sends_close
+    end
+
+    assert_scripted { scp.download!('/path/to/remote.txt', '/path/to/local.txt') }
+    assert_equal 'a' * 1234, file.io.string
+  end
+
   private
 
     def simple_download(channel, mode=0666)
