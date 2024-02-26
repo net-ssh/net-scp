@@ -225,22 +225,51 @@ class TestDownload < Net::SCP::TestCase
     assert_equal "a" * 1234, file.io.string
   end
 
-  def test_download_should_work_when_remote_closes_channel_without_eof
+  def test_download_should_work_when_remote_closes_channel_without_exit_status
     file = prepare_file('/path/to/local.txt', 'a' * 1234)
 
     story do |session|
       channel = session.opens_channel
       channel.sends_exec 'scp -f /path/to/remote.txt'
       simple_download(channel)
-      # Remote closes without sending an eof
+      # Remote closes without sending an exit-status
       channel.gets_close
-      # We are polite and send an eof & close the channel
+      # We just send eof and close the channel
       channel.sends_eof
       channel.sends_close
     end
 
     assert_scripted { scp.download!('/path/to/remote.txt', '/path/to/local.txt') }
     assert_equal 'a' * 1234, file.io.string
+  end
+
+  def test_download_should_raise_error_when_remote_closes_channel_before_end
+    file = prepare_file('/path/to/local.txt', 'a' * 1234)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec 'scp -f /path/to/remote.txt'
+      channel.sends_ok
+      channel.gets_data "C%04o 1234 remote.txt\n" % 0666
+      channel.sends_ok
+      channel.gets_data 'a' * 500
+      # We should have received 1234 bytes and \0 but remote closed before the end
+      channel.gets_close
+      # We just send eof and close the channel
+      channel.sends_eof
+      channel.sends_close
+    end
+
+    error = nil
+    begin
+      assert_scripted { scp.download!('/path/to/remote.txt', '/path/to/local.txt') }
+    rescue => e
+      error = e
+    end
+
+    assert_equal Net::SCP::Error, error.class
+    assert_equal 'SCP did not finish successfully (channel closed before end of transmission)',
+        error.message
   end
 
   private

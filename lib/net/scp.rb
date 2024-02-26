@@ -363,16 +363,19 @@ module Net
               channel[:error_string] = ''
 
               channel.on_close do
-                if channel[:exit].nil? && channel[:state] == :finish
-                  # The remote closed the channel without sending an eof, but
-                  # the transfer was successful, so whe set channel[:exit] to 0
-                  channel[:exit] = 0
-                end
-                send("#{channel[:state]}_state", channel)
-                if channel[:exit] != 0
+                # If we got an exit-status and it is not 0, something went wrong
+                if !channel[:exit].nil? && channel[:exit] != 0
                   raise Net::SCP::Error, 'SCP did not finish successfully ' \
                                          "(#{channel[:exit]}): #{channel[:error_string]}"
                 end
+                # We may get no exit-status at all as returning a status is only RECOMENDED
+                # in RFC4254. But if our state is not :finish, something went wrong
+                if channel[:exit].nil? && channel[:state] != :finish
+                  raise Net::SCP::Error, 'SCP did not finish successfully ' \
+                                         '(channel closed before end of transmission)'
+                end
+                # At this point, :state can be :finish or :next_item
+                send("#{channel[:state]}_state", channel)
               end
               channel.on_data                   { |ch2, data| channel[:buffer].append(data) }
               channel.on_extended_data          { |ch2, type, data| debug { data.chomp } }
