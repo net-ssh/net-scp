@@ -362,7 +362,21 @@ module Net
               channel[:stack   ] = []
               channel[:error_string] = ''
 
-              channel.on_close                  { |ch2| send("#{channel[:state]}_state", channel); raise Net::SCP::Error, "SCP did not finish successfully (#{channel[:exit]}): #{channel[:error_string]}" if channel[:exit] != 0 }
+              channel.on_close do
+                # If we got an exit-status and it is not 0, something went wrong
+                if !channel[:exit].nil? && channel[:exit] != 0
+                  raise Net::SCP::Error, 'SCP did not finish successfully ' \
+                                         "(#{channel[:exit]}): #{channel[:error_string]}"
+                end
+                # We may get no exit-status at all as returning a status is only RECOMENDED
+                # in RFC4254. But if our state is not :finish, something went wrong
+                if channel[:exit].nil? && channel[:state] != :finish
+                  raise Net::SCP::Error, 'SCP did not finish successfully ' \
+                                         '(channel closed before end of transmission)'
+                end
+                # At this point, :state can be :finish or :next_item
+                send("#{channel[:state]}_state", channel)
+              end
               channel.on_data                   { |ch2, data| channel[:buffer].append(data) }
               channel.on_extended_data          { |ch2, type, data| debug { data.chomp } }
               channel.on_request("exit-status") { |ch2, data| channel[:exit] = data.read_long }
