@@ -35,15 +35,15 @@ Gem::Specification.new do |spec|
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       spec.add_runtime_dependency(%q<net-ssh>, [">= 2.6.5", "< 8.0.0"])
       spec.add_development_dependency(%q<test-unit>, [">= 0"])
-      spec.add_development_dependency(%q<mocha>, [">= 0"])
+      spec.add_dependency(%q<mocha>, [">= 0", "<2.1"])
     else
       spec.add_dependency(%q<net-ssh>, [">= 2.6.5", "< 8.0.0"])
       spec.add_dependency(%q<test-unit>, [">= 0"])
-      spec.add_dependency(%q<mocha>, [">= 0"])
+      spec.add_dependency(%q<mocha>, [">= 0", "<2.1"])
     end
   else
     spec.add_dependency(%q<net-ssh>, [">= 2.6.5", "< 8.0.0"])
     spec.add_dependency(%q<test-unit>, [">= 0"])
-    spec.add_dependency(%q<mocha>, [">= 0"])
+    spec.add_dependency(%q<mocha>, [">= 0", "<2.1"])
   end
 end

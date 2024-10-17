@@ -329,7 +329,12 @@ module Net
       # (:verbose, :recursive, :preserve). Returns the command-line as a
       # string, ready to execute.
       def scp_command(mode, options)
-        command = "scp "
+        command =
+          if RUBY_VERSION < "2.3"
+            "scp "
+          else
+            +"scp "
+          end
         command << (mode == :upload ? "-t" : "-f")
         command << " -v" if options[:verbose]
         command << " -r" if options[:recursive]
