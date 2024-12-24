@@ -4,3 +4,8 @@ doc
 *.swp
 
 .DS_Store
+
+# Bundle local files
+/vendor/
+.bundle/config
+Gemfile.lock
