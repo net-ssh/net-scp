@@ -7,7 +7,7 @@ lib/net/scp.rb
 lib/uri/open-scp.rb
 lib/uri/scp.rb
 Rakefile
-README.rdoc
+README.md
 setup.rb
 test/common.rb
 test/test_all.rb
