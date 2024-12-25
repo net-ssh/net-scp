@@ -9,3 +9,5 @@ doc
 /vendor/
 .bundle/config
 Gemfile.lock
+
+lib/net/ssh/version.rb.old
