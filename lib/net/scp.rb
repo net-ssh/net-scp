@@ -344,7 +344,9 @@ module Net
       def start_command(mode, local, remote, options={}, &callback)
         session.open_channel do |channel|
 
-          if options[:shell]
+          if options[:windows_path]
+            command = "#{scp_command(mode, options)} #{remote.gsub('\\', '/')}"
+          elsif options[:shell]
             escaped_file = shellescape(remote).gsub(/'/) { |m| "'\\''" }
             command = "#{options[:shell]} -c '#{scp_command(mode, options)} #{escaped_file}'"
           else
