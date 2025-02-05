@@ -120,7 +120,7 @@ class ConfigTable
                ((major == 1) and
                 ((minor >= 5) or
                  ((minor == 4) and (teeny >= 4)))))
-  
+
   subprefix = lambda {|path|
     path.sub(/\A#{Regexp.quote(c['prefix'])}/o, '$prefix')
   }
@@ -172,7 +172,7 @@ class ConfigTable
                      'the directory for ruby scripts' ] ],
     [ 'so-dir',    [ sodir,
                      'path',
-                     'the directory for ruby extentions' ] ],
+                     'the directory for ruby extensions' ] ],
     [ 'data-dir',  [ '$prefix/share',
                      'path',
                      'the directory for shared data' ] ],
@@ -184,10 +184,10 @@ class ConfigTable
                      'the ruby program using for installation' ] ],
     [ 'make-prog', [ makeprog,
                      'name',
-                     'the make program to compile ruby extentions' ] ],
+                     'the make program to compile ruby extensions' ] ],
     [ 'without-ext', [ 'no',
                        'yes/no',
-                       'does not compile/install ruby extentions' ] ]
+                       'does not compile/install ruby extensions' ] ]
   ]
   multipackage_descripters = [
     [ 'with',      [ '',
@@ -303,7 +303,7 @@ class ConfigTable
         unless ConfigTable.config_key?(k)
     @table[k] = v
   end
-    
+
   def [](key)
     return nil unless @table[key]
     @table[key].gsub(%r<\$([^/]+)>) { self[$1] }
@@ -479,7 +479,7 @@ module FileOperations
   def ruby(str)
     command config('ruby-prog') + ' ' + str
   end
-  
+
   def make(task = '')
     command config('make-prog') + ' ' + task
   end
@@ -572,7 +572,7 @@ module HookScriptAPI
   def srcdirectory?(path)
     File.dir?(srcfile(path))
   end
-  
+
   def srcfile?(path)
     File.file? srcfile(path)
   end
@@ -606,10 +606,10 @@ class ToplevelInstaller
   TASKS = [
     [ 'config',   'saves your configurations' ],
     [ 'show',     'shows current configuration' ],
-    [ 'setup',    'compiles ruby extentions and others' ],
+    [ 'setup',    'compiles ruby extensions and others' ],
     [ 'install',  'installs files' ],
-    [ 'clean',    "does `make clean' for each extention" ],
-    [ 'distclean',"does `make distclean' for each extention" ]
+    [ 'clean',    "does `make clean' for each extension" ],
+    [ 'distclean',"does `make distclean' for each extension" ]
   ]
 
   def ToplevelInstaller.invoke
@@ -708,7 +708,7 @@ class ToplevelInstaller
       when '-v', '--version'
         puts "#{File.basename($0)} version #{Version}"
         exit 0
-      
+
       when '--copyright'
         puts Copyright
         exit 0
@@ -911,7 +911,7 @@ class ToplevelInstallerMulti < ToplevelInstaller
 
   def print_usage(f)
     super
-    f.puts 'Inluded packages:'
+    f.puts 'Included packages:'
     f.puts '  ' + @packages.sort.join(' ')
     f.puts
   end
@@ -1146,7 +1146,7 @@ class Installer
 
   def install_dir_ext(rel)
     return unless extdir?(curr_srcdir())
-    install_files ruby_extentions('.'),
+    install_files ruby_extensions('.'),
                   "#{config('so-dir')}/#{File.dirname(rel)}",
                   0555
   end
@@ -1165,9 +1165,9 @@ class Installer
   def ruby_scripts
     collect_filenames_auto().select {|n| /\.rb\z/ =~ n || "module.yml" == n }
   end
-  
+
   # picked up many entries from cvs-1.11.1/src/ignore.c
-  reject_patterns = %w( 
+  reject_patterns = %w(
     core RCSLOG tags TAGS .make.state
     .nse_depinfo #* .#* cvslog.* ,* .del-* *.olb
     *~ *.old *.bak *.BAK *.orig *.rej _$* *$
@@ -1212,14 +1212,14 @@ class Installer
     }
   end
 
-  def ruby_extentions(dir)
-    _ruby_extentions(dir) or
-        raise InstallError, "no ruby extention exists: 'ruby #{$0} setup' first"
+  def ruby_extensions(dir)
+    _ruby_extensions(dir) or
+        raise InstallError, "no ruby extension exists: 'ruby #{$0} setup' first"
   end
 
   DLEXT = /\.#{ ::Config::CONFIG['DLEXT'] }\z/
 
-  def _ruby_extentions(dir)
+  def _ruby_extensions(dir)
     Dir.open(dir) {|d|
       return d.select {|fname| DLEXT =~ fname }
     }
