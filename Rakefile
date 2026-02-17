@@ -1,7 +1,10 @@
 require "rubygems"
 require "rake"
 require "rake/clean"
-require "rdoc/task"
+begin
+  require "rdoc/task"
+rescue LoadError
+end
 require "bundler/gem_tasks"
 
 desc "When releasing make sure NET_SSH_BUILDGEM_SIGNED is set"
@@ -67,17 +70,19 @@ Rake::TestTask.new do |t|
 end
 
 extra_files = %w[LICENSE.txt THANKS.txt CHANGES.txt ]
-RDoc::Task.new do |rdoc|
-  rdoc.rdoc_dir = "rdoc"
-  rdoc.title = "#{name} #{version}"
-  rdoc.generator = 'hanna' # gem install hanna-nouveau
-  rdoc.main = 'README.md'
-  rdoc.rdoc_files.include("README*")
-  rdoc.rdoc_files.include("bin/*.rb")
-  rdoc.rdoc_files.include("lib/**/*.rb")
-  extra_files.each { |file|
-    rdoc.rdoc_files.include(file) if File.exist?(file)
-  }
+if defined?(RDoc::Task)
+  RDoc::Task.new do |rdoc|
+    rdoc.rdoc_dir = "rdoc"
+    rdoc.title = "#{name} #{version}"
+    rdoc.generator = 'hanna' # gem install hanna-nouveau
+    rdoc.main = 'README.md'
+    rdoc.rdoc_files.include("README*")
+    rdoc.rdoc_files.include("bin/*.rb")
+    rdoc.rdoc_files.include("lib/**/*.rb")
+    extra_files.each { |file|
+      rdoc.rdoc_files.include(file) if File.exist?(file)
+    }
+  end
 end
 
 def change_version(&block)
