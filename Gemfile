@@ -3,7 +3,7 @@ source 'https://rubygems.org'
 # Specify your gem's dependencies in mygem.gemspec
 gemspec
 
-gem "net-ssh", ">= 7.3.1.rc1"
+gem "net-ssh", ">= 7.3.1"
 
 # TODO: add to gemspec
 gem "bundler", ">= 1.11"
