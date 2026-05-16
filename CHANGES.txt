@@ -1,3 +1,12 @@
+=== 4.1.1
+
+* Fix frozen string literal compatibility [npezza93, mfazekas]
+  - Use mutable string for scp command construction
+  - Use mutable string for error_string initialization
+* Add Ruby 3.4 and ruby-head to CI matrix
+* Add Ruby 4.0+ compatibility (logger, rdoc gems)
+* Drop EOL Ruby 2.3-2.5 from CI
+
 === 3.0.0
 
 * NetSHH 6.* support
