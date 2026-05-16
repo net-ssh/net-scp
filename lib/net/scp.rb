@@ -360,7 +360,7 @@ module Net
               channel[:buffer  ] = Net::SSH::Buffer.new
               channel[:state   ] = "#{mode}_start"
               channel[:stack   ] = []
-              channel[:error_string] = ''
+              channel[:error_string] = +''
 
               channel.on_close do
                 # If we got an exit-status and it is not 0, something went wrong

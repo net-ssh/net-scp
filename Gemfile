@@ -3,9 +3,13 @@ source 'https://rubygems.org'
 # Specify your gem's dependencies in mygem.gemspec
 gemspec
 
+gem "net-ssh", ">= 7.3.1"
+gem "logger" # no longer a default gem in Ruby 4.0+
+
 # TODO: add to gemspec
 gem "bundler", ">= 1.11"
 gem "rake", ">= 12.0"
+gem "rdoc"
 
 gem 'byebug', group: %i[development test] if !Gem.win_platform? && RUBY_ENGINE == "ruby"
 
