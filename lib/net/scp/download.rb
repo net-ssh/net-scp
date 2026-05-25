@@ -73,7 +73,7 @@ module Net; class SCP
     # Finishes off the read, sets the times for the file (if any), and then
     # jumps to either #finish_state (for single-file downloads) or
     # #read_directive_state (for recursive downloads). A 0-byte is sent to the
-    # server to indicate that the file was recieved successfully.
+    # server to indicate that the file was received successfully.
     def finish_read_state(channel)
       channel[:io].close unless channel[:io] == channel[:local]
 
