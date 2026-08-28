@@ -376,6 +376,9 @@ module Net
                 end
                 # At this point, :state can be :finish or :next_item
                 send("#{channel[:state]}_state", channel)
+              ensure
+                io = channel[:io]
+                io.close if io && io != channel[:local] && !io.closed?
               end
               channel.on_data                   { |ch2, data| channel[:buffer].append(data) }
               channel.on_extended_data          { |ch2, type, data| debug { data.chomp } }
