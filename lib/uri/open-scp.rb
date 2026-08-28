@@ -10,7 +10,9 @@ module URI
     def buffer_open(buf, proxy, open_options)
       options = open_options.merge(:port => port, :password => password)
       progress = options.delete(:progress_proc)
-      buf << Net::SCP.download!(host, user, path, nil, options, &progress)
+      output = Object.new
+      output.define_singleton_method(:write) { |data| buf << data }
+      Net::SCP.download!(host, user, path, output, options, &progress)
       buf.io.rewind
     end
 
