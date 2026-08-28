@@ -118,6 +118,9 @@ module Net; class SCP
       end
 
       channel[:size] = channel[:stat] ? channel[:stat].size : channel[:current].size
+      if channel[:current].respond_to?(:read) && channel[:current].respond_to?(:pos)
+        channel[:size] = [channel[:size] - channel[:current].pos, 0].max
+      end
     end
 
     # If the :preserve option is set, send a 'T' directive and wait for the
