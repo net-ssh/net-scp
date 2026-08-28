@@ -342,6 +342,7 @@ module Net
       # sets up a state machine to use to process the upload or download.
       # (See Net::SCP::Upload and Net::SCP::Download).
       def start_command(mode, local, remote, options={}, &callback)
+        local = local.to_path if local.respond_to?(:to_path) && !local.respond_to?(:to_io)
         session.open_channel do |channel|
 
           if options[:shell]
