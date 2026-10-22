@@ -97,7 +97,7 @@ class Net::SCP::TestCase < Test::Unit::TestCase
       File.stubs(:open).with(path, 'rb').returns(StringIO.new(contents))
 
       @io = StringIO.new
-      File.stubs(:new).with(path, 'wb', mode).returns(io)
+      File.stubs(:new).with { |p, m, perm, *| p == path && m == 'wb' && perm == mode }.returns(io)
     end
   end
 

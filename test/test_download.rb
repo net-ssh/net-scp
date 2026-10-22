@@ -437,7 +437,217 @@ class TestDownload < Net::SCP::TestCase
     assert_equal 'a' * 1234, file.io.string
   end
 
+  { 04755 => 0755, 02755 => 0755, 01777 => 0777, 06777 => 0777, 0644 => 0644, 0444 => 0644 }.each do |sent, expected|
+    define_method("test_download_file_should_create_mode_%04o_as_%04o" % [sent, expected]) do
+      io = StringIO.new
+      File.stubs(:directory?).with("/path/to/local.txt").returns(false)
+      File.expects(:new).with("/path/to/local.txt", "wb", expected).returns(io)
+
+      expect_scp_session "-f /path/to/remote.txt" do |channel|
+        simple_download(channel, sent)
+      end
+
+      assert_scripted { scp.download!("/path/to/remote.txt", "/path/to/local.txt") }
+      assert_equal "a" * 1234, io.string
+    end
+  end
+
+  def test_download_with_preserve_should_still_strip_special_mode_bits
+    io = StringIO.new
+    File.stubs(:directory?).with("/path/to/local.txt").returns(false)
+    File.expects(:new).with("/path/to/local.txt", "wb", 0755).returns(io)
+
+    expect_scp_session "-f -p /path/to/remote.txt" do |channel|
+      simple_download(channel, 06755)
+    end
+
+    assert_scripted { scp.download!("/path/to/remote.txt", "/path/to/local.txt", :preserve => true) }
+  end
+
+  { 04755 => 0755, 01777 => 0777, 0750 => 0750, 0500 => 0700 }.each do |sent, expected|
+    define_method("test_download_directory_should_create_mode_%04o_as_%04o" % [sent, expected]) do
+      Dir.expects(:mkdir).with("/path/to/local")
+      Dir.expects(:mkdir).with("/path/to/local/remote", expected)
+
+      expect_scp_session "-f -r /path/to/remote" do |channel|
+        channel.sends_ok
+        channel.gets_data "D%04o 0 remote\n" % sent
+        channel.sends_ok
+        channel.gets_data "E\n"
+        channel.sends_ok
+      end
+
+      assert_scripted { scp.download!("/path/to/remote", "/path/to/local", :recursive => true) }
+    end
+  end
+
+  def test_download_into_directory_should_reject_name_not_matching_request
+    assert_rejects_unrequested_name("-f /path/to/remote.txt", "/path/to/remote.txt", "C0644 3 .bashrc\n")
+  end
+
+  def test_download_into_directory_should_reject_name_not_matching_glob
+    assert_rejects_unrequested_name("-f /path/to/\\*.txt", "/path/to/*.txt", "C0644 3 remote.sh\n")
+  end
+
+  def test_recursive_download_should_reject_top_level_name_not_matching_request
+    assert_rejects_unrequested_name("-f -r /path/to/remote", "/path/to/remote", "D0700 0 .ssh\n", :recursive => true)
+  end
+
+  def test_recursive_download_should_reject_top_level_file_not_matching_request
+    assert_rejects_unrequested_name("-f -r /path/to/remote", "/path/to/remote", "C0644 3 .bashrc\n", :recursive => true)
+  end
+
+  {
+    "glob" => ["/path/to/*.txt", "/path/to/\\*.txt", "remote.txt"],
+    "glob_with_leading_dot" => ["/path/to/*", "/path/to/\\*", ".profile"],
+    "brace" => ["/path/to/{a,remote}.txt", "/path/to/\\{a,remote\\}.txt", "remote.txt"],
+    "literal_brackets" => ["/path/to/remote[1].txt", "/path/to/remote\\[1\\].txt", "remote[1].txt"],
+    "trailing_slash" => ["/path/to/remote.txt/", "/path/to/remote.txt/", "remote.txt"]
+  }.each do |label, (remote, escaped, name)|
+    define_method("test_download_into_directory_should_accept_#{label}_match") do
+      file = nil
+      prepare_directory "/path/to/local" do |dir|
+        file = dir.file name, ""
+      end
+
+      expect_scp_session "-f #{escaped}" do |channel|
+        simple_download(channel, 0666, name)
+      end
+
+      assert_scripted { scp.download!(remote, "/path/to/local") }
+      assert_equal "a" * 1234, file.io.string
+    end
+  end
+
+  def test_download_into_directory_should_refuse_to_follow_symlink_at_server_named_path
+    omit "File::NOFOLLOW not supported" unless defined?(File::NOFOLLOW)
+    with_tmpdir do |tmp|
+      Dir.mkdir("#{tmp}/local")
+      File.write("#{tmp}/victim", "original")
+      File.symlink("#{tmp}/victim", "#{tmp}/local/remote.txt")
+
+      expect_scp_session "-f /path/to/remote.txt" do |channel|
+        channel.sends_ok
+        channel.gets_data "C0644 3 remote.txt\n"
+      end
+
+      Net::SSH::Test::Extensions::IO.with_test_extension do
+        e = assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote.txt", "#{tmp}/local") }
+        assert_match(/symlink/, e.message)
+      end
+      assert_equal "original", File.read("#{tmp}/victim")
+    end
+  end
+
+  def test_recursive_download_should_refuse_to_follow_symlink_at_server_named_file
+    omit "File::NOFOLLOW not supported" unless defined?(File::NOFOLLOW)
+    with_tmpdir do |tmp|
+      Dir.mkdir("#{tmp}/local")
+      Dir.mkdir("#{tmp}/local/remote")
+      File.write("#{tmp}/victim", "original")
+      File.symlink("#{tmp}/victim", "#{tmp}/local/remote/file.txt")
+
+      expect_scp_session "-f -r /path/to/remote" do |channel|
+        channel.sends_ok
+        channel.gets_data "D0755 0 remote\n"
+        channel.sends_ok
+        channel.gets_data "C0644 3 file.txt\n"
+      end
+
+      Net::SSH::Test::Extensions::IO.with_test_extension do
+        e = assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote", "#{tmp}/local", :recursive => true) }
+        assert_match(/symlink/, e.message)
+      end
+      assert_equal "original", File.read("#{tmp}/victim")
+    end
+  end
+
+  def test_recursive_download_should_refuse_to_descend_into_symlinked_directory
+    with_tmpdir do |tmp|
+      Dir.mkdir("#{tmp}/local")
+      Dir.mkdir("#{tmp}/outside")
+      File.symlink("#{tmp}/outside", "#{tmp}/local/remote")
+
+      expect_scp_session "-f -r /path/to/remote" do |channel|
+        channel.sends_ok
+        channel.gets_data "D0755 0 remote\n"
+      end
+
+      Net::SSH::Test::Extensions::IO.with_test_extension do
+        e = assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote", "#{tmp}/local", :recursive => true) }
+        assert_match(/symlink/, e.message)
+      end
+      assert_equal [], Dir.children("#{tmp}/outside")
+    end
+  end
+
+  def test_download_to_symlinked_file_given_by_caller_should_write_through_it
+    with_tmpdir do |tmp|
+      File.write("#{tmp}/target.txt", "")
+      File.symlink("#{tmp}/target.txt", "#{tmp}/link.txt")
+
+      expect_scp_session "-f /path/to/remote.txt" do |channel|
+        simple_download(channel)
+      end
+
+      assert_scripted { scp.download!("/path/to/remote.txt", "#{tmp}/link.txt") }
+      assert_equal "a" * 1234, File.read("#{tmp}/target.txt")
+    end
+  end
+
+  def test_download_into_symlinked_directory_given_by_caller_should_write_through_it
+    with_tmpdir do |tmp|
+      Dir.mkdir("#{tmp}/target")
+      File.symlink("#{tmp}/target", "#{tmp}/link")
+
+      expect_scp_session "-f /path/to/remote.txt" do |channel|
+        simple_download(channel)
+      end
+
+      assert_scripted { scp.download!("/path/to/remote.txt", "#{tmp}/link") }
+      assert_equal "a" * 1234, File.read("#{tmp}/target/remote.txt")
+    end
+  end
+
+  def test_recursive_download_into_symlinked_directory_given_by_caller_should_write_through_it
+    with_tmpdir do |tmp|
+      Dir.mkdir("#{tmp}/target")
+      File.symlink("#{tmp}/target", "#{tmp}/link")
+
+      expect_scp_session "-f -r /path/to/remote" do |channel|
+        channel.sends_ok
+        channel.gets_data "D0755 0 remote\n"
+        simple_download(channel)
+        channel.gets_data "E\n"
+        channel.sends_ok
+      end
+
+      assert_scripted { scp.download!("/path/to/remote", "#{tmp}/link", :recursive => true) }
+      assert_equal "a" * 1234, File.read("#{tmp}/target/remote/remote.txt")
+    end
+  end
+
   private
+
+    def with_tmpdir
+      Dir.mktmpdir("net-scp-test") { |tmp| yield File.realpath(tmp) }
+    end
+
+    def assert_rejects_unrequested_name(arguments, remote, directive, options = {})
+      prepare_directory "/path/to/local"
+      File.expects(:new).never
+      Dir.expects(:mkdir).with { |path, *| path != "/path/to/local" }.never
+
+      expect_scp_session arguments do |channel|
+        channel.sends_ok
+        channel.gets_data directive
+      end
+
+      Net::SSH::Test::Extensions::IO.with_test_extension do
+        e = assert_raises(Net::SCP::Error) { scp.download!(remote, "/path/to/local", options) }
+        assert_match(/\Afile name from server does not match request: /, e.message)
+      end
+    end
 
     def assert_rejects_name(arguments, directive, options = {})
       prepare_directory "/path/to/local"
@@ -466,9 +676,9 @@ class TestDownload < Net::SCP::TestCase
       channel.sends_ok
     end
 
-    def simple_download(channel, mode=0666)
+    def simple_download(channel, mode=0666, name="remote.txt")
       channel.sends_ok
-      channel.gets_data "C%04o 1234 remote.txt\n" % mode
+      channel.gets_data "C%04o 1234 #{name}\n" % mode
       channel.sends_ok
       channel.gets_data "a" * 1234
       channel.gets_ok
