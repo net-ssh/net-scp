@@ -128,10 +128,12 @@ module Net; class SCP
 
       channel[:local] = local_path_for(channel, directive[:name])
 
-      if File.exist?(channel[:local]) && !File.directory?(channel[:local])
+      if File.symlink?(channel[:local])
+        raise Net::SCP::Error, "#{channel[:local]} is a symlink, refusing to follow it"
+      elsif File.exist?(channel[:local]) && !File.directory?(channel[:local])
         raise Net::SCP::Error, "#{channel[:local]} already exists and is not a directory"
       elsif !File.exist?(channel[:local])
-        Dir.mkdir(channel[:local], directive[:mode] | 0700)
+        Dir.mkdir(channel[:local], (directive[:mode] & 0777) | 0700)
       end
 
       if channel[:options][:preserve] && channel[:times]
@@ -146,14 +148,14 @@ module Net; class SCP
     # actual read.
     def read_file(channel, directive)
       if !channel[:local].respond_to?(:write)
-        directive[:name] = (channel[:options][:recursive] || File.directory?(channel[:local])) ?
-          local_path_for(channel, directive[:name]) :
-          channel[:local]
+        server_named = channel[:options][:recursive] || File.directory?(channel[:local])
+        directive[:name] = server_named ? local_path_for(channel, directive[:name]) : channel[:local]
       end
 
       channel[:file] = directive.merge(:times => channel[:times])
+      # Setuid/setgid/sticky bits are never taken from the server, even with :preserve.
       channel[:io] = channel[:local].respond_to?(:write) ? channel[:local] :
-        File.new(directive[:name], "wb", directive[:mode] | 0600)
+        open_local_file(directive[:name], (directive[:mode] & 0777) | 0600, server_named)
       channel[:times] = nil
       channel[:remaining] = channel[:file][:size]
       channel[:state] = :read_data
@@ -169,7 +171,30 @@ module Net; class SCP
         raise Net::SCP::Error, "invalid file name from server: #{name.inspect}"
       end
 
+      if channel[:stack].empty? && !requested_name?(channel[:remote], name)
+        raise Net::SCP::Error, "file name from server does not match request: #{name.inspect}"
+      end
+
       File.join(channel[:local], name)
+    end
+
+    # OpenSSH's CVE-2019-6111 check: the flags mirror its brace expansion plus fnmatch(3) with flags 0.
+    def requested_name?(remote, name)
+      pattern = File.basename(remote.to_s)
+      name == pattern || File.fnmatch(pattern, name, File::FNM_DOTMATCH | File::FNM_EXTGLOB)
+    end
+
+    # A symlink planted at a server-named path must not redirect the write;
+    # the caller's own target may be a symlink on purpose (net-sftp#162).
+    def open_local_file(path, perm, nofollow)
+      return File.new(path, "wb", perm) unless nofollow && defined?(File::NOFOLLOW)
+
+      begin
+        File.new(path, "wb", perm, :flags => File::NOFOLLOW)
+      rescue SystemCallError
+        raise unless File.symlink?(path)
+        raise Net::SCP::Error, "#{path} is a symlink, refusing to follow it"
+      end
     end
   end
 
