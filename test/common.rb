@@ -97,7 +97,7 @@ class Net::SCP::TestCase < Test::Unit::TestCase
       File.stubs(:open).with(path, 'rb').returns(StringIO.new(contents))
 
       @io = StringIO.new
-      File.stubs(:new).with(path, 'wb', mode).returns(io)
+      File.stubs(:new).with { |p, m, perm, *| p == path && m == 'wb' && perm == mode }.returns(io)
     end
   end
 
@@ -157,5 +157,19 @@ class Net::SCP::TestCase < Test::Unit::TestCase
 
   def scp(options = {})
     @scp ||= Net::SCP.new(connection(options))
+  end
+
+  # Net::SSH::Test feeds one remote packet per event-loop pass, but a real socket read can carry several.
+  def deliver_remote_packets_together!
+    socket.extend(Module.new do
+      def idle!
+        return false unless script.next(:first)
+
+        current_pos = pos
+        self.string = string + script.next.to_s while script.next(:first)&.remote?
+        self.pos = current_pos
+        true
+      end
+    end)
   end
 end
