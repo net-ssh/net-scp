@@ -126,7 +126,7 @@ module Net; class SCP
         raise Net::SCP::Error, ":recursive not specified for directory download"
       end
 
-      channel[:local] = File.join(channel[:local], directive[:name])
+      channel[:local] = local_path_for(channel, directive[:name])
 
       if File.exist?(channel[:local]) && !File.directory?(channel[:local])
         raise Net::SCP::Error, "#{channel[:local]} already exists and is not a directory"
@@ -147,7 +147,7 @@ module Net; class SCP
     def read_file(channel, directive)
       if !channel[:local].respond_to?(:write)
         directive[:name] = (channel[:options][:recursive] || File.directory?(channel[:local])) ?
-          File.join(channel[:local], directive[:name]) :
+          local_path_for(channel, directive[:name]) :
           channel[:local]
       end
 
@@ -159,6 +159,17 @@ module Net; class SCP
       channel[:state] = :read_data
 
       progress_callback(channel, channel[:file][:name], 0, channel[:file][:size])
+    end
+
+    # The name comes from the server, so anything but a single path component
+    # would let a malicious server write outside the target (CVE-2019-6111).
+    def local_path_for(channel, name)
+      if name.empty? || name == "." || name == ".." || name.include?("/") || name.include?("\0") ||
+         (File::ALT_SEPARATOR && name.include?(File::ALT_SEPARATOR))
+        raise Net::SCP::Error, "invalid file name from server: #{name.inspect}"
+      end
+
+      File.join(channel[:local], name)
     end
   end
 
