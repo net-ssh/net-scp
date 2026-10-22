@@ -91,6 +91,7 @@ module Net; class SCP
     # upload and moves to #upload_current_state.
     def next_item_state(channel)
       if channel[:stack].empty?
+        channel[:state] = :finish
         finish_state(channel)
       else
         next_item = channel[:stack].last.shift

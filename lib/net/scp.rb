@@ -1,3 +1,4 @@
+require 'pathname'
 require 'stringio'
 require 'shellwords'
 
@@ -64,7 +65,7 @@ module Net
   #     puts "#{name}: #{sent}/#{total}"
   #   end
   #
-  # Whenever a new chunk of data is recieved for or sent to a file, the callback
+  # Whenever a new chunk of data is received for or sent to a file, the callback
   # will be invoked, indicating the name of the file (local for downloads,
   # remote for uploads), the number of bytes that have been sent or received
   # so far for the file, and the size of the file.
@@ -346,6 +347,7 @@ module Net
       # sets up a state machine to use to process the upload or download.
       # (See Net::SCP::Upload and Net::SCP::Download).
       def start_command(mode, local, remote, options={}, &callback)
+        local = local.to_path if local.is_a?(Pathname)
         session.open_channel do |channel|
 
           if options[:shell]
@@ -367,19 +369,22 @@ module Net
               channel[:error_string] = +''
 
               channel.on_close do
+                # The close can be dispatched before on_process has consumed data that arrived with it.
+                send("#{channel[:state]}_state", channel)
                 # If we got an exit-status and it is not 0, something went wrong
                 if !channel[:exit].nil? && channel[:exit] != 0
                   raise Net::SCP::Error, 'SCP did not finish successfully ' \
                                          "(#{channel[:exit]}): #{channel[:error_string]}"
                 end
-                # We may get no exit-status at all as returning a status is only RECOMENDED
-                # in RFC4254. But if our state is not :finish, something went wrong
-                if channel[:exit].nil? && channel[:state] != :finish
-                  raise Net::SCP::Error, 'SCP did not finish successfully ' \
-                                         '(channel closed before end of transmission)'
+                # A zero or missing exit-status does not prove the transfer completed.
+                if channel[:state] != :finish
+                  message = +'SCP did not finish successfully (channel closed before end of transmission)'
+                  message << ": #{channel[:error_string]}" unless channel[:error_string].empty?
+                  raise Net::SCP::Error, message
                 end
-                # At this point, :state can be :finish or :next_item
-                send("#{channel[:state]}_state", channel)
+              ensure
+                io = channel[:io]
+                io.close if io && io != channel[:local] && !io.closed?
               end
               channel.on_data                   { |ch2, data| channel[:buffer].append(data) }
               channel.on_extended_data          { |ch2, type, data| debug { data.chomp } }
