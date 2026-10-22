@@ -440,4 +440,49 @@ class TestUpload < Net::SCP::TestCase
     deliver_remote_packets_together!
     assert_scripted { scp.upload!("/path/to/local.txt", "/path/to/remote.txt") }
   end
+
+  def test_upload_should_reject_invalid_chunk_size_before_opening_channel
+    [0, -1, 1.5, "10", Object.new].each do |chunk_size|
+      session = stub(logger: nil)
+      session.expects(:open_channel).never
+      error = assert_raises(ArgumentError) do
+        Net::SCP.new(session).upload(StringIO.new("abc"), "/path/to/remote.txt", chunk_size: chunk_size)
+      end
+      assert_equal ":chunk_size must be a positive Integer", error.message
+    end
+  end
+
+  [nil, false, :unset].each do |chunk_size|
+    define_method("test_upload_with_#{chunk_size.inspect.delete(':')}_chunk_size_should_use_default_chunk_size") do
+      data = "a" * (Net::SCP::Upload::DEFAULT_CHUNK_SIZE + 1)
+
+      expect_scp_session "-t /path/to/remote.txt" do |channel|
+        channel.gets_ok
+        channel.sends_data "C0640 #{data.bytesize} remote.txt\n"
+        channel.gets_ok
+        channel.sends_data "a" * Net::SCP::Upload::DEFAULT_CHUNK_SIZE
+        channel.sends_data "a"
+        channel.sends_ok
+        channel.gets_ok
+      end
+
+      options = chunk_size == :unset ? {} : { chunk_size: chunk_size }
+      assert_scripted { scp.upload!(StringIO.new(data), "/path/to/remote.txt", options) }
+    end
+  end
+
+  def test_upload_with_custom_chunk_size_should_send_chunks_of_that_size
+    expect_scp_session "-t /path/to/remote.txt" do |channel|
+      channel.gets_ok
+      channel.sends_data "C0640 5 remote.txt\n"
+      channel.gets_ok
+      channel.sends_data "ab"
+      channel.sends_data "cd"
+      channel.sends_data "e"
+      channel.sends_ok
+      channel.gets_ok
+    end
+
+    assert_scripted { scp.upload!(StringIO.new("abcde"), "/path/to/remote.txt", chunk_size: 2) }
+  end
 end
