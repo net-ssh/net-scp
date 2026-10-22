@@ -365,19 +365,19 @@ module Net
               channel[:error_string] = +''
 
               channel.on_close do
+                # The close can be dispatched before on_process has consumed data that arrived with it.
+                send("#{channel[:state]}_state", channel)
                 # If we got an exit-status and it is not 0, something went wrong
                 if !channel[:exit].nil? && channel[:exit] != 0
                   raise Net::SCP::Error, 'SCP did not finish successfully ' \
                                          "(#{channel[:exit]}): #{channel[:error_string]}"
                 end
-                # We may get no exit-status at all as returning a status is only RECOMMENDED
-                # in RFC4254. But if our state is not :finish, something went wrong
-                if channel[:exit].nil? && channel[:state] != :finish
-                  raise Net::SCP::Error, 'SCP did not finish successfully ' \
-                                         '(channel closed before end of transmission)'
+                # A zero or missing exit-status does not prove the transfer completed.
+                if channel[:state] != :finish
+                  message = +'SCP did not finish successfully (channel closed before end of transmission)'
+                  message << ": #{channel[:error_string]}" unless channel[:error_string].empty?
+                  raise Net::SCP::Error, message
                 end
-                # At this point, :state can be :finish or :next_item
-                send("#{channel[:state]}_state", channel)
               ensure
                 io = channel[:io]
                 io.close if io && io != channel[:local] && !io.closed?

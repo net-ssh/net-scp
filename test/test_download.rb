@@ -352,6 +352,53 @@ class TestDownload < Net::SCP::TestCase
     assert_equal 'a' * 500, io.string
   end
 
+  def test_download_should_raise_error_when_remote_exits_zero_before_end
+    prepare_file('/path/to/local.txt', 'a' * 1234)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec 'scp -f /path/to/remote.txt'
+      channel.sends_ok
+      channel.gets_data "C0666 1234 remote.txt\n"
+      channel.sends_ok
+      channel.gets_data 'a' * 500
+      channel.gets_exit_status(0)
+      channel.gets_eof
+      channel.gets_close
+      channel.sends_eof
+      channel.sends_close
+    end
+
+    Net::SSH::Test::Extensions::IO.with_test_extension do
+      e = assert_raises(Net::SCP::Error) { scp.download!('/path/to/remote.txt', '/path/to/local.txt') }
+      assert_equal 'SCP did not finish successfully (channel closed before end of transmission)', e.message
+    end
+  end
+
+  def test_download_should_succeed_when_last_data_and_close_arrive_together
+    file = prepare_file('/path/to/local.txt', 'a' * 1234)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec 'scp -f /path/to/remote.txt'
+      channel.sends_ok
+      channel.gets_data "C0666 1234 remote.txt\n"
+      channel.sends_ok
+      channel.gets_data 'a' * 1234
+      channel.gets_ok
+      channel.gets_exit_status(0)
+      channel.gets_eof
+      channel.gets_close
+      channel.sends_ok
+      channel.sends_eof
+      channel.sends_close
+    end
+
+    deliver_remote_packets_together!
+    assert_scripted { scp.download!('/path/to/remote.txt', '/path/to/local.txt') }
+    assert_equal 'a' * 1234, file.io.string
+  end
+
   private
 
     def chunked_download(channel)
