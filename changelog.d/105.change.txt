@@ -1,0 +1,1 @@
+Raise `Net::SCP::Error` when the server ends a transfer before the SCP protocol finishes, instead of reporting a truncated transfer as successful [#105, #96]

@@ -1,4 +1,7 @@
 require 'common'
+require 'pathname'
+require 'tmpdir'
+require 'timeout'
 
 class TestUpload < Net::SCP::TestCase
   def test_upload_file_should_transfer_file
@@ -280,5 +283,161 @@ class TestUpload < Net::SCP::TestCase
       e = assert_raises(Net::SCP::Error) { scp.upload!("/path/to/local.txt", "/path/to/remote.txt") }
       assert_equal("\1", e.message)
     end
+  end
+
+  def test_upload_pathname_should_read_file_once
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "local.txt")
+      File.binwrite(path, "abcdef")
+      File.chmod(0o644, path)
+
+      expect_scp_session "-t /path/to/remote.txt" do |channel|
+        channel.gets_ok
+        channel.sends_data "C0644 6 local.txt\n"
+        channel.gets_ok
+        channel.sends_data "abc"
+        channel.sends_data "def"
+        channel.sends_ok
+        channel.gets_ok
+      end
+
+      Timeout.timeout(5) do
+        assert_scripted { scp.upload!(Pathname.new(path), "/path/to/remote.txt", chunk_size: 3) }
+      end
+    end
+  end
+
+  def test_upload_file_object_should_be_used_as_io
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "local.txt")
+      File.binwrite(path, "abcdef")
+      File.chmod(0o644, path)
+
+      expect_scp_session "-t /path/to/remote.txt" do |channel|
+        channel.gets_ok
+        channel.sends_data "C0644 6 remote.txt\n"
+        channel.gets_ok
+        channel.sends_data "abc"
+        channel.sends_data "def"
+        channel.sends_ok
+        channel.gets_ok
+      end
+
+      File.open(path, "rb") do |file|
+        file.expects(:to_path).never
+        Timeout.timeout(5) do
+          assert_scripted { scp.upload!(file, "/path/to/remote.txt", chunk_size: 3) }
+        end
+        assert !file.closed?
+      end
+    end
+  end
+
+  def test_upload_should_close_local_file_when_remote_exits_with_error
+    prepare_file('/path/to/local.txt', 'a' * 1234)
+    io = StringIO.new('a' * 1234)
+    File.stubs(:open).with('/path/to/local.txt', 'rb').returns(io)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec 'scp -t /path/to/remote.txt'
+      channel.gets_ok
+      channel.sends_data "C0666 1234 local.txt\n"
+      channel.gets_exit_status(1)
+      channel.gets_close
+      channel.sends_eof
+      channel.sends_close
+    end
+
+    assert_raises(Net::SCP::Error) do
+      assert_scripted { scp.upload!('/path/to/local.txt', '/path/to/remote.txt') }
+    end
+    assert io.closed?
+  end
+
+  def test_upload_should_not_close_caller_io_when_remote_exits_with_error
+    io = StringIO.new('a' * 1234)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec 'scp -t /path/to/remote.txt'
+      channel.gets_ok
+      channel.sends_data "C0640 1234 remote.txt\n"
+      channel.gets_exit_status(1)
+      channel.gets_close
+      channel.sends_eof
+      channel.sends_close
+    end
+
+    assert_raises(Net::SCP::Error) do
+      assert_scripted { scp.upload!(io, '/path/to/remote.txt') }
+    end
+    assert !io.closed?
+  end
+
+  def test_upload_should_raise_error_when_remote_exits_zero_before_final_ack
+    prepare_file("/path/to/local.txt", "a" * 1234)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec "scp -t /path/to/remote.txt"
+      channel.gets_ok
+      channel.sends_data "C0666 1234 local.txt\n"
+      channel.gets_ok
+      channel.sends_data "a" * 1234
+      channel.sends_ok
+      channel.gets_exit_status(0)
+      channel.gets_eof
+      channel.gets_close
+      channel.sends_close
+    end
+
+    Net::SSH::Test::Extensions::IO.with_test_extension do
+      e = assert_raises(Net::SCP::Error) { scp.upload!("/path/to/local.txt", "/path/to/remote.txt") }
+      assert_equal "SCP did not finish successfully (channel closed before end of transmission)", e.message
+    end
+  end
+
+  def test_upload_should_work_when_remote_closes_channel_without_exit_status
+    prepare_file("/path/to/local.txt", "a" * 1234)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec "scp -t /path/to/remote.txt"
+      channel.gets_ok
+      channel.sends_data "C0666 1234 local.txt\n"
+      channel.gets_ok
+      channel.sends_data "a" * 1234
+      channel.sends_ok
+      channel.gets_ok
+      channel.sends_eof
+      channel.gets_close
+      channel.sends_close
+    end
+
+    assert_scripted { scp.upload!("/path/to/local.txt", "/path/to/remote.txt") }
+  end
+
+  def test_upload_should_succeed_when_final_ack_and_close_arrive_together
+    prepare_file("/path/to/local.txt", "a" * 1234)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec "scp -t /path/to/remote.txt"
+      channel.gets_ok
+      channel.sends_data "C0666 1234 local.txt\n"
+      channel.gets_ok
+      channel.sends_data "a" * 1234
+      channel.sends_ok
+      channel.gets_ok
+      channel.gets_exit_status(0)
+      channel.gets_eof
+      channel.gets_close
+      channel.sends_eof
+      channel.sends_close
+    end
+
+    deliver_remote_packets_together!
+    assert_scripted { scp.upload!("/path/to/local.txt", "/path/to/remote.txt") }
   end
 end
