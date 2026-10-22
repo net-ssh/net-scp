@@ -1,0 +1,1 @@
+Opening an `scp://` URI through `uri/open-scp` now percent-decodes the user, password and path (once, keeping a literal `+`) and passes an IPv6 address to SSH without its brackets, so `scp://user@[::1]/a%20b` downloads `/a b` from `::1`. Thanks @OskarEichler [#94]
