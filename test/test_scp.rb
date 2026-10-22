@@ -32,7 +32,7 @@ class TestSCP < Net::SCP::TestCase
     assert yielded
   end
 
-  def test_self_upload_should_instatiate_scp_and_invoke_synchronous_upload
+  def test_self_upload_should_instantiate_scp_and_invoke_synchronous_upload
     scp = stub('scp')
     scp.expects(:upload!).with("/path/to/local", "/path/to/remote", { :recursive => true })
 
@@ -44,7 +44,7 @@ class TestSCP < Net::SCP::TestCase
       { :ssh => { :password => "foo" }, :recursive => true })
   end
 
-  def test_self_download_should_instatiate_scp_and_invoke_synchronous_download
+  def test_self_download_should_instantiate_scp_and_invoke_synchronous_download
     scp = stub('scp')
     scp.expects(:download!).with("/path/to/remote", "/path/to/local", { :recursive => true }).returns(:result)
 
