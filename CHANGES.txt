@@ -1,5 +1,6 @@
 === 4.1.1
 
+* Allow net-ssh 8
 * Fix frozen string literal compatibility [npezza93, mfazekas]
   - Use mutable string for scp command construction
   - Use mutable string for error_string initialization
