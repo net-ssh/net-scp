@@ -8,9 +8,9 @@ module URI
 
   class SCP
     def buffer_open(buf, proxy, open_options)
-      options = open_options.merge(:port => port, :password => password && parser.unescape(password))
+      options = open_options.merge(:port => port, :password => password && URI::DEFAULT_PARSER.unescape(password))
       progress = options.delete(:progress_proc)
-      buf << Net::SCP.download!(hostname, user && parser.unescape(user), parser.unescape(path), nil, options, &progress)
+      buf << Net::SCP.download!(hostname, user && URI::DEFAULT_PARSER.unescape(user), URI::DEFAULT_PARSER.unescape(path), nil, options, &progress)
       buf.io.rewind
     end
 
