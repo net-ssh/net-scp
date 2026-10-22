@@ -50,8 +50,11 @@ module Net; class SCP
       when :file
         read_file(channel, directive)
       when :end
+        directory = channel[:stack].pop
+        if channel[:options][:preserve] && directory && directory[:times]
+          File.utime(directory[:times][:atime], directory[:times][:mtime], channel[:local])
+        end
         channel[:local] = File.dirname(channel[:local])
-        channel[:stack].pop
         channel[:state] = :finish if channel[:stack].empty?
       end
 
@@ -136,11 +139,7 @@ module Net; class SCP
         Dir.mkdir(channel[:local], (directive[:mode] & 0777) | 0700)
       end
 
-      if channel[:options][:preserve] && channel[:times]
-        File.utime(channel[:times][:atime], channel[:times][:mtime], channel[:local])
-      end
-
-      channel[:stack] << directive
+      channel[:stack] << directive.merge(:times => channel[:times])
       channel[:times] = nil
     end
 

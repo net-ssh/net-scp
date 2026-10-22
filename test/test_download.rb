@@ -627,6 +627,71 @@ class TestDownload < Net::SCP::TestCase
     end
   end
 
+  def test_recursive_download_with_preserve_should_keep_directory_times_after_creating_its_files
+    with_tmpdir do |tmp|
+      expect_scp_session "-f -r -p /path/to/remote" do |channel|
+        channel.sends_ok
+        channel.gets_data "T1000000000 123456 1000000010 234567\n"
+        channel.sends_ok
+        channel.gets_data "D0755 0 remote\n"
+        channel.sends_ok
+        channel.gets_data "T1100000000 0 1100000010 0\n"
+        simple_download(channel, 0644)
+        channel.gets_data "E\n"
+        channel.sends_ok
+      end
+
+      assert_scripted { scp.download!("/path/to/remote", "#{tmp}/local", :recursive => true, :preserve => true) }
+      assert_equal Time.at(1000000000, 123456), File.mtime("#{tmp}/local/remote")
+      assert_equal Time.at(1000000010, 234567), File.atime("#{tmp}/local/remote")
+      assert_equal Time.at(1100000000), File.mtime("#{tmp}/local/remote/remote.txt")
+    end
+  end
+
+  def test_recursive_download_with_preserve_should_keep_nested_directory_times
+    with_tmpdir do |tmp|
+      expect_scp_session "-f -r -p /path/to/remote" do |channel|
+        channel.sends_ok
+        channel.gets_data "T1000000000 0 1000000010 0\n"
+        channel.sends_ok
+        channel.gets_data "D0755 0 remote\n"
+        channel.sends_ok
+        channel.gets_data "T1200000000 0 1200000010 0\n"
+        channel.sends_ok
+        channel.gets_data "D0755 0 sub\n"
+        channel.sends_ok
+        channel.gets_data "T1100000000 0 1100000010 0\n"
+        simple_download(channel, 0644)
+        channel.gets_data "E\n"
+        channel.sends_ok
+        channel.gets_data "E\n"
+        channel.sends_ok
+      end
+
+      assert_scripted { scp.download!("/path/to/remote", "#{tmp}/local", :recursive => true, :preserve => true) }
+      assert_equal Time.at(1000000000), File.mtime("#{tmp}/local/remote")
+      assert_equal Time.at(1200000000), File.mtime("#{tmp}/local/remote/sub")
+      assert_equal Time.at(1100000000), File.mtime("#{tmp}/local/remote/sub/remote.txt")
+      assert_equal Time.at(1100000010), File.atime("#{tmp}/local/remote/sub/remote.txt")
+    end
+  end
+
+  def test_recursive_download_without_preserve_should_not_set_directory_times
+    with_tmpdir do |tmp|
+      expect_scp_session "-f -r /path/to/remote" do |channel|
+        channel.sends_ok
+        channel.gets_data "D0755 0 remote\n"
+        simple_download(channel)
+        channel.gets_data "E\n"
+        channel.sends_ok
+      end
+
+      File.expects(:utime).never
+      assert_scripted { scp.download!("/path/to/remote", "#{tmp}/local", :recursive => true) }
+      assert_equal "a" * 1234, File.read("#{tmp}/local/remote/remote.txt")
+    end
+  end
+
   private
 
     def with_tmpdir
