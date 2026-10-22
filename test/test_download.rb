@@ -1,4 +1,7 @@
 require 'common'
+require 'pathname'
+require 'tmpdir'
+require 'timeout'
 
 class TestDownload < Net::SCP::TestCase
   def test_download_file_should_transfer_file
@@ -271,7 +274,53 @@ class TestDownload < Net::SCP::TestCase
     assert_equal 'SCP did not finish successfully (channel closed before end of transmission)', error.message
   end
 
+  def test_download_into_pathname_should_write_all_chunks
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "local.txt")
+
+      expect_scp_session "-f /path/to/remote.txt" do |channel|
+        chunked_download(channel)
+      end
+
+      Timeout.timeout(5) do
+        assert_scripted { scp.download!("/path/to/remote.txt", Pathname.new(path)) }
+      end
+      assert_equal "abcdef", File.binread(path)
+    end
+  end
+
+  def test_download_into_file_object_should_be_used_as_io
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "local.txt")
+
+      expect_scp_session "-f /path/to/remote.txt" do |channel|
+        chunked_download(channel)
+      end
+
+      File.open(path, "wb") do |file|
+        file.expects(:to_path).never
+        Timeout.timeout(5) do
+          assert_scripted { scp.download!("/path/to/remote.txt", file) }
+        end
+        assert !file.closed?
+      end
+      assert_equal "abcdef", File.binread(path)
+    end
+  end
+
   private
+
+    def chunked_download(channel)
+      channel.sends_ok
+      channel.gets_data "C0644 6 remote.txt\n"
+      channel.sends_ok
+      channel.gets_data "abc"
+      channel.inject_remote_delay!
+      channel.gets_data "def"
+      channel.gets_ok
+      channel.sends_ok
+    end
+
 
     def simple_download(channel, mode=0666)
       channel.sends_ok

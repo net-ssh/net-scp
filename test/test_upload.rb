@@ -1,4 +1,7 @@
 require 'common'
+require 'pathname'
+require 'tmpdir'
+require 'timeout'
 
 class TestUpload < Net::SCP::TestCase
   def test_upload_file_should_transfer_file
@@ -279,6 +282,54 @@ class TestUpload < Net::SCP::TestCase
     Net::SSH::Test::Extensions::IO.with_test_extension do
       e = assert_raises(Net::SCP::Error) { scp.upload!("/path/to/local.txt", "/path/to/remote.txt") }
       assert_equal("\1", e.message)
+    end
+  end
+
+  def test_upload_pathname_should_read_file_once
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "local.txt")
+      File.binwrite(path, "abcdef")
+      File.chmod(0o644, path)
+
+      expect_scp_session "-t /path/to/remote.txt" do |channel|
+        channel.gets_ok
+        channel.sends_data "C0644 6 local.txt\n"
+        channel.gets_ok
+        channel.sends_data "abc"
+        channel.sends_data "def"
+        channel.sends_ok
+        channel.gets_ok
+      end
+
+      Timeout.timeout(5) do
+        assert_scripted { scp.upload!(Pathname.new(path), "/path/to/remote.txt", chunk_size: 3) }
+      end
+    end
+  end
+
+  def test_upload_file_object_should_be_used_as_io
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "local.txt")
+      File.binwrite(path, "abcdef")
+      File.chmod(0o644, path)
+
+      expect_scp_session "-t /path/to/remote.txt" do |channel|
+        channel.gets_ok
+        channel.sends_data "C0644 6 remote.txt\n"
+        channel.gets_ok
+        channel.sends_data "abc"
+        channel.sends_data "def"
+        channel.sends_ok
+        channel.gets_ok
+      end
+
+      File.open(path, "rb") do |file|
+        file.expects(:to_path).never
+        Timeout.timeout(5) do
+          assert_scripted { scp.upload!(file, "/path/to/remote.txt", chunk_size: 3) }
+        end
+        assert !file.closed?
+      end
     end
   end
 end
