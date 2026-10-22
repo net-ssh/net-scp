@@ -332,4 +332,46 @@ class TestUpload < Net::SCP::TestCase
       end
     end
   end
+
+  def test_upload_should_close_local_file_when_remote_exits_with_error
+    prepare_file('/path/to/local.txt', 'a' * 1234)
+    io = StringIO.new('a' * 1234)
+    File.stubs(:open).with('/path/to/local.txt', 'rb').returns(io)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec 'scp -t /path/to/remote.txt'
+      channel.gets_ok
+      channel.sends_data "C0666 1234 local.txt\n"
+      channel.gets_exit_status(1)
+      channel.gets_close
+      channel.sends_eof
+      channel.sends_close
+    end
+
+    assert_raises(Net::SCP::Error) do
+      assert_scripted { scp.upload!('/path/to/local.txt', '/path/to/remote.txt') }
+    end
+    assert io.closed?
+  end
+
+  def test_upload_should_not_close_caller_io_when_remote_exits_with_error
+    io = StringIO.new('a' * 1234)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec 'scp -t /path/to/remote.txt'
+      channel.gets_ok
+      channel.sends_data "C0640 1234 remote.txt\n"
+      channel.gets_exit_status(1)
+      channel.gets_close
+      channel.sends_eof
+      channel.sends_close
+    end
+
+    assert_raises(Net::SCP::Error) do
+      assert_scripted { scp.upload!(io, '/path/to/remote.txt') }
+    end
+    assert !io.closed?
+  end
 end

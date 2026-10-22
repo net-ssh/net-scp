@@ -65,7 +65,7 @@ module Net
   #     puts "#{name}: #{sent}/#{total}"
   #   end
   #
-  # Whenever a new chunk of data is recieved for or sent to a file, the callback
+  # Whenever a new chunk of data is received for or sent to a file, the callback
   # will be invoked, indicating the name of the file (local for downloads,
   # remote for uploads), the number of bytes that have been sent or received
   # so far for the file, and the size of the file.
@@ -370,7 +370,7 @@ module Net
                   raise Net::SCP::Error, 'SCP did not finish successfully ' \
                                          "(#{channel[:exit]}): #{channel[:error_string]}"
                 end
-                # We may get no exit-status at all as returning a status is only RECOMENDED
+                # We may get no exit-status at all as returning a status is only RECOMMENDED
                 # in RFC4254. But if our state is not :finish, something went wrong
                 if channel[:exit].nil? && channel[:state] != :finish
                   raise Net::SCP::Error, 'SCP did not finish successfully ' \
@@ -378,6 +378,9 @@ module Net
                 end
                 # At this point, :state can be :finish or :next_item
                 send("#{channel[:state]}_state", channel)
+              ensure
+                io = channel[:io]
+                io.close if io && io != channel[:local] && !io.closed?
               end
               channel.on_data                   { |ch2, data| channel[:buffer].append(data) }
               channel.on_extended_data          { |ch2, type, data| debug { data.chomp } }
