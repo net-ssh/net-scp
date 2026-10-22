@@ -274,6 +274,44 @@ class TestDownload < Net::SCP::TestCase
     assert_equal 'SCP did not finish successfully (channel closed before end of transmission)', error.message
   end
 
+  def test_download_file_into_directory_should_use_remote_name
+    file = nil
+    prepare_directory "/path/to/local" do |dir|
+      file = dir.file "remote.txt", ""
+    end
+
+    expect_scp_session "-f /path/to/remote.txt" do |channel|
+      simple_download(channel)
+    end
+
+    assert_scripted { scp.download!("/path/to/remote.txt", "/path/to/local") }
+    assert_equal "a" * 1234, file.io.string
+  end
+
+  UNSAFE_NAMES = {
+    "parent_relative" => "../x",
+    "nested" => "a/b",
+    "absolute" => "/abs",
+    "parent" => "..",
+    "current" => ".",
+    "empty" => "",
+    "nul" => "a\0b"
+  }
+
+  UNSAFE_NAMES.each do |label, name|
+    define_method("test_recursive_download_should_reject_#{label}_file_name") do
+      assert_rejects_name("-f -r /path/to/remote", "C0644 3 #{name}\n", :recursive => true)
+    end
+
+    define_method("test_recursive_download_should_reject_#{label}_directory_name") do
+      assert_rejects_name("-f -r /path/to/remote", "D0755 0 #{name}\n", :recursive => true)
+    end
+
+    define_method("test_download_into_directory_should_reject_#{label}_file_name") do
+      assert_rejects_name("-f /path/to/remote", "C0644 3 #{name}\n")
+    end
+  end
+
   def test_download_into_pathname_should_write_all_chunks
     Dir.mktmpdir do |dir|
       path = File.join(dir, "local.txt")
@@ -401,6 +439,22 @@ class TestDownload < Net::SCP::TestCase
 
   private
 
+    def assert_rejects_name(arguments, directive, options = {})
+      prepare_directory "/path/to/local"
+      File.expects(:new).never
+      Dir.expects(:mkdir).with { |path, *| path != "/path/to/local" }.never
+
+      expect_scp_session arguments do |channel|
+        channel.sends_ok
+        channel.gets_data directive
+      end
+
+      Net::SSH::Test::Extensions::IO.with_test_extension do
+        e = assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote", "/path/to/local", options) }
+        assert_match(/\Ainvalid file name from server: /, e.message)
+      end
+    end
+
     def chunked_download(channel)
       channel.sends_ok
       channel.gets_data "C0644 6 remote.txt\n"
@@ -411,7 +465,6 @@ class TestDownload < Net::SCP::TestCase
       channel.gets_ok
       channel.sends_ok
     end
-
 
     def simple_download(channel, mode=0666)
       channel.sends_ok
