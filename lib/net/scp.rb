@@ -1,3 +1,4 @@
+require 'pathname'
 require 'stringio'
 require 'shellwords'
 
@@ -342,6 +343,7 @@ module Net
       # sets up a state machine to use to process the upload or download.
       # (See Net::SCP::Upload and Net::SCP::Download).
       def start_command(mode, local, remote, options={}, &callback)
+        local = local.to_path if local.is_a?(Pathname)
         session.open_channel do |channel|
 
           if options[:shell]
