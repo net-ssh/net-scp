@@ -1,0 +1,1 @@
+With `preserve: true`, recursive downloads now keep directories' modification times, which were overwritten when their contents were created. Thanks @OskarEichler [#88]
