@@ -275,6 +275,10 @@ module Net
     #   channel = scp.upload("/local/path", "/remote/path")
     #   channel.wait
     def upload(local, remote, options={}, &progress)
+      chunk_size = options[:chunk_size] || Upload::DEFAULT_CHUNK_SIZE
+      unless chunk_size.is_a?(Integer) && chunk_size > 0
+        raise ArgumentError, ":chunk_size must be a positive Integer"
+      end
       start_command(:upload, local, remote, options, &progress)
     end
 

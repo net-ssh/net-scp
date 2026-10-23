@@ -138,6 +138,84 @@ class TestUpload < Net::SCP::TestCase
     assert_scripted { scp.upload!(io, "/path/to/remote.txt") }
   end
 
+  def test_upload_partially_read_io_should_announce_remaining_bytes
+    expect_scp_session "-t /path/to/remote.txt" do |channel|
+      channel.gets_ok
+      channel.sends_data "C0640 5 remote.txt\n"
+      channel.gets_ok
+      channel.sends_data "fghij"
+      channel.sends_ok
+      channel.gets_ok
+    end
+
+    io = StringIO.new("abcdefghij")
+    io.pos = 5
+    Timeout.timeout(5) do
+      assert_scripted { scp.upload!(io, "/path/to/remote.txt") }
+    end
+    assert !io.closed?
+  end
+
+  def test_upload_partially_read_file_object_should_announce_remaining_bytes
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "local.txt")
+      File.binwrite(path, "abcdef")
+      File.chmod(0o644, path)
+
+      expect_scp_session "-t /path/to/remote.txt" do |channel|
+        channel.gets_ok
+        channel.sends_data "C0644 4 remote.txt\n"
+        channel.gets_ok
+        channel.sends_data "cdef"
+        channel.sends_ok
+        channel.gets_ok
+      end
+
+      File.open(path, "rb") do |file|
+        file.read(2)
+        Timeout.timeout(5) do
+          assert_scripted { scp.upload!(file, "/path/to/remote.txt") }
+        end
+        assert !file.closed?
+      end
+    end
+  end
+
+  def test_upload_io_positioned_past_end_should_announce_zero_bytes
+    expect_scp_session "-t /path/to/remote.txt" do |channel|
+      channel.gets_ok
+      channel.sends_data "C0640 0 remote.txt\n"
+      channel.gets_ok
+      channel.sends_ok
+      channel.gets_ok
+    end
+
+    io = StringIO.new("abc")
+    io.pos = 10
+    Timeout.timeout(5) do
+      assert_scripted { scp.upload!(io, "/path/to/remote.txt") }
+    end
+  end
+
+  def test_upload_io_without_pos_should_announce_its_size
+    io = Object.new
+    def io.size; 3; end
+    def io.read(_length); @read ? nil : (@read = true; "abc"); end
+
+    expect_scp_session "-t /path/to/remote.txt" do |channel|
+      channel.gets_ok
+      channel.sends_data "C0640 3 remote.txt\n"
+      channel.gets_ok
+      channel.sends_data "abc"
+      channel.sends_ok
+      channel.gets_ok
+    end
+
+    Timeout.timeout(5) do
+      assert_scripted { scp.upload!(io, "/path/to/remote.txt") }
+    end
+  end
+
   def test_upload_io_with_mode_should_honor_mode_as_permissions
     expect_scp_session "-t /path/to/remote.txt" do |channel|
       channel.gets_ok
@@ -439,5 +517,50 @@ class TestUpload < Net::SCP::TestCase
 
     deliver_remote_packets_together!
     assert_scripted { scp.upload!("/path/to/local.txt", "/path/to/remote.txt") }
+  end
+
+  def test_upload_should_reject_invalid_chunk_size_before_opening_channel
+    [0, -1, 1.5, "10", Object.new].each do |chunk_size|
+      session = stub(logger: nil)
+      session.expects(:open_channel).never
+      error = assert_raises(ArgumentError) do
+        Net::SCP.new(session).upload(StringIO.new("abc"), "/path/to/remote.txt", chunk_size: chunk_size)
+      end
+      assert_equal ":chunk_size must be a positive Integer", error.message
+    end
+  end
+
+  [nil, false, :unset].each do |chunk_size|
+    define_method("test_upload_with_#{chunk_size.inspect.delete(':')}_chunk_size_should_use_default_chunk_size") do
+      data = "a" * (Net::SCP::Upload::DEFAULT_CHUNK_SIZE + 1)
+
+      expect_scp_session "-t /path/to/remote.txt" do |channel|
+        channel.gets_ok
+        channel.sends_data "C0640 #{data.bytesize} remote.txt\n"
+        channel.gets_ok
+        channel.sends_data "a" * Net::SCP::Upload::DEFAULT_CHUNK_SIZE
+        channel.sends_data "a"
+        channel.sends_ok
+        channel.gets_ok
+      end
+
+      options = chunk_size == :unset ? {} : { chunk_size: chunk_size }
+      assert_scripted { scp.upload!(StringIO.new(data), "/path/to/remote.txt", options) }
+    end
+  end
+
+  def test_upload_with_custom_chunk_size_should_send_chunks_of_that_size
+    expect_scp_session "-t /path/to/remote.txt" do |channel|
+      channel.gets_ok
+      channel.sends_data "C0640 5 remote.txt\n"
+      channel.gets_ok
+      channel.sends_data "ab"
+      channel.sends_data "cd"
+      channel.sends_data "e"
+      channel.sends_ok
+      channel.gets_ok
+    end
+
+    assert_scripted { scp.upload!(StringIO.new("abcde"), "/path/to/remote.txt", chunk_size: 2) }
   end
 end
