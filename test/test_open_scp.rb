@@ -35,6 +35,26 @@ class TestOpenSCP < Net::SCP::TestCase
     fake
   end
 
+  def test_download_is_written_into_the_open_uri_buffer_as_it_arrives
+    first = "a" * 6000
+    second = "b" * 6000
+    fake = stub_scp(first, second)
+    buf = OpenURI::Buffer.new
+    sizes = []
+    fake.after_write = -> { sizes << buf.size }
+
+    URI("scp://user@example.com/file").buffer_open(buf, nil, {})
+
+    assert_equal [6000, 12000], sizes
+    assert_kind_of Tempfile, buf.io
+    assert_equal first + second, buf.io.read
+  end
+
+  def test_empty_download
+    stub_scp
+    assert_equal "", URI("scp://user@example.com/file").open(&:read)
+  end
+
   def test_progress_proc_receives_the_byte_count
     stub_scp("abc", "de")
     sizes = []
