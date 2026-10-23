@@ -35,6 +35,31 @@ class TestOpenSCP < Net::SCP::TestCase
     fake
   end
 
+  def test_progress_proc_receives_the_byte_count
+    stub_scp("abc", "de")
+    sizes = []
+    URI("scp://user@example.com/file").open(progress_proc: ->(size) { sizes << size }, &:read)
+    assert_equal [0, 3, 5], sizes
+  end
+
+  def test_content_length_proc_is_called_once_with_the_file_size
+    stub_scp("abc", "de")
+    lengths = []
+    URI("scp://user@example.com/file").open(content_length_proc: ->(length) { lengths << length }, &:read)
+    assert_equal [5], lengths
+  end
+
+  def test_callbacks_for_an_empty_file
+    stub_scp
+    lengths = []
+    sizes = []
+    data = URI("scp://user@example.com/file").open(content_length_proc: ->(length) { lengths << length },
+                                                   progress_proc: ->(size) { sizes << size }, &:read)
+    assert_equal "", data
+    assert_equal [0], lengths
+    assert_equal [0], sizes
+  end
+
   def test_ipv6_host_is_passed_without_brackets
     stub_scp("data")
     URI("scp://user@[::1]:2222/path").open(&:read)
