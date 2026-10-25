@@ -453,6 +453,108 @@ class TestUpload < Net::SCP::TestCase
     assert !io.closed?
   end
 
+  def test_upload_failure_should_not_break_later_operations_on_session
+    File.stubs(:stat).with('/path/to/missing.txt').raises(Errno::ENOENT)
+    prepare_file('/path/to/local.txt', 'a' * 1234)
+
+    story do |session|
+      failed = session.opens_channel
+      failed.sends_exec 'scp -t /path/to/remote.txt'
+      channel = session.opens_channel(false)
+      failed.sends_close
+      failed.gets_close
+      session.gets(:channel_open_confirmation, channel.local_id, channel.remote_id, 0x20000, 0x10000)
+      channel.sends_exec 'scp -t /path/to/remote.txt'
+      channel.gets_ok
+      channel.sends_data "C0666 1234 local.txt\n"
+      channel.gets_ok
+      channel.sends_data 'a' * 1234
+      channel.sends_ok
+      channel.gets_ok
+      channel.sends_eof
+      channel.gets_exit_status
+      channel.gets_eof
+      channel.gets_close
+      channel.sends_close
+    end
+
+    errors = []
+    assert_scripted do
+      begin
+        scp.upload!('/path/to/missing.txt', '/path/to/remote.txt')
+      rescue Errno::ENOENT => e
+        errors << e
+      end
+      scp.upload!('/path/to/local.txt', '/path/to/remote.txt')
+    end
+    assert_equal 1, errors.size
+    assert connection.channels.empty?
+  end
+
+  def test_async_upload_failure_should_raise_from_event_loop_once
+    File.stubs(:stat).with('/path/to/missing.txt').raises(Errno::ENOENT)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec 'scp -t /path/to/remote.txt'
+      channel.sends_close
+      channel.gets_close
+    end
+
+    assert_scripted do
+      scp.upload('/path/to/missing.txt', '/path/to/remote.txt')
+      assert_raises(Errno::ENOENT) { connection.loop }
+      connection.loop
+    end
+    assert connection.channels.empty?
+  end
+
+  def test_upload_should_close_local_file_when_progress_callback_raises
+    prepare_file('/path/to/local.txt', 'a' * 1234)
+    io = StringIO.new('a' * 1234)
+    File.stubs(:open).with('/path/to/local.txt', 'rb').returns(io)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec 'scp -t /path/to/remote.txt'
+      channel.gets_ok
+      channel.sends_data "C0666 1234 local.txt\n"
+      channel.sends_close
+      channel.gets_close
+    end
+
+    calls = 0
+    assert_scripted do
+      assert_raises(ArgumentError) do
+        scp.upload!('/path/to/local.txt', '/path/to/remote.txt') { calls += 1; raise ArgumentError }
+      end
+      connection.loop
+    end
+    assert_equal 1, calls
+    assert io.closed?
+    assert connection.channels.empty?
+  end
+
+  def test_upload_should_not_close_caller_io_when_progress_callback_raises
+    io = StringIO.new('a' * 1234)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec 'scp -t /path/to/remote.txt'
+      channel.gets_ok
+      channel.sends_data "C0640 1234 remote.txt\n"
+      channel.sends_close
+      channel.gets_close
+    end
+
+    assert_scripted do
+      assert_raises(ArgumentError) { scp.upload!(io, '/path/to/remote.txt') { raise ArgumentError } }
+      connection.loop
+    end
+    assert !io.closed?
+    assert connection.channels.empty?
+  end
+
   def test_upload_should_raise_error_when_remote_exits_zero_before_final_ack
     prepare_file("/path/to/local.txt", "a" * 1234)
 

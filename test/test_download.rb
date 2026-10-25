@@ -390,6 +390,54 @@ class TestDownload < Net::SCP::TestCase
     assert_equal 'a' * 500, io.string
   end
 
+  def test_download_should_close_local_file_when_progress_callback_raises
+    file = prepare_file('/path/to/local.txt', 'a' * 1234)
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec 'scp -f /path/to/remote.txt'
+      channel.sends_ok
+      channel.gets_data "C0666 1234 remote.txt\n"
+      channel.sends_close
+      channel.gets_close
+    end
+
+    calls = 0
+    Timeout.timeout(5) do
+      assert_scripted do
+        assert_raises(ArgumentError) do
+          scp.download!('/path/to/remote.txt', '/path/to/local.txt') { calls += 1; raise ArgumentError }
+        end
+        connection.loop
+      end
+    end
+    assert_equal 1, calls
+    assert file.io.closed?
+    assert connection.channels.empty?
+  end
+
+  def test_download_should_not_close_caller_io_when_progress_callback_raises
+    io = StringIO.new
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec 'scp -f /path/to/remote.txt'
+      channel.sends_ok
+      channel.gets_data "C0666 1234 remote.txt\n"
+      channel.sends_close
+      channel.gets_close
+    end
+
+    Timeout.timeout(5) do
+      assert_scripted do
+        assert_raises(ArgumentError) { scp.download!('/path/to/remote.txt', io) { raise ArgumentError } }
+        connection.loop
+      end
+    end
+    assert !io.closed?
+    assert connection.channels.empty?
+  end
+
   def test_download_should_raise_error_when_remote_exits_zero_before_end
     prepare_file('/path/to/local.txt', 'a' * 1234)
 
