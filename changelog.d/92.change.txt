@@ -1,1 +1,0 @@
-Parsing an `scp://` URI with a valueless query entry (`?flag`) or an empty one (`?a=1&&b=2`) no longer raises `NoMethodError`, and `URI::SCP#options` reflects the current query after `query=`. Thanks @OskarEichler [#92]

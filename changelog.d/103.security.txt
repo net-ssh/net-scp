@@ -1,1 +1,0 @@
-Recursive downloads, and downloads into a directory, reject file names from the server that are not a single path component (such as `../x` or `a/b`) instead of writing outside the target directory. Reported in net-sftp#162 by srosenhamer [#103]

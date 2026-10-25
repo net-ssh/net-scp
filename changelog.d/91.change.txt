@@ -1,1 +1,0 @@
-Opening an `scp://` URI through `uri/open-scp` now calls `:progress_proc` with the number of bytes received, as OpenURI documents, instead of with the SCP progress arguments (which raised `ArgumentError` for a lambda), and calls `:content_length_proc` once with the file size. Thanks @OskarEichler [#91]

@@ -1,1 +1,0 @@
-Uploading from an IO that isn't at its start now announces only the remaining bytes, instead of the full size, which made the transfer hang or fail. Thanks @OskarEichler [#86]

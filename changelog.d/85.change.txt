@@ -1,1 +1,0 @@
-Accept a `Pathname` as the local path for uploads and downloads; previously uploads looped forever and downloads kept only the last chunk. Thanks @OskarEichler [#85, #29]

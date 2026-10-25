@@ -1,1 +1,0 @@
-Opening an `scp://` URI through `uri/open-scp` now uses the port and password given in the URI; they were passed outside the `:ssh` options and ignored. Options given in `:ssh` still take precedence. Thanks @OskarEichler [#90]

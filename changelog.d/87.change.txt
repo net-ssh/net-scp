@@ -1,1 +1,0 @@
-`upload`/`upload!` with a zero, negative or non-Integer `:chunk_size` now raises `ArgumentError` before opening a channel; previously `0` hung forever sending empty chunks, a negative value or a String failed only after the channel was open, and a Float was silently truncated. Thanks @OskarEichler [#87]

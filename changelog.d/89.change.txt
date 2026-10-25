@@ -1,1 +1,0 @@
-Close the local file net-scp opened for an upload or download when the transfer fails, so it is not left open (and locked on Windows) [#89, #20]

@@ -1,1 +1,0 @@
-Opening an `scp://` URI through `uri/open-scp` now writes the download into the OpenURI buffer as it arrives, so large files spill to a temporary file instead of being held in memory twice. Thanks @OskarEichler [#93]
