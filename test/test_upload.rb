@@ -563,4 +563,132 @@ class TestUpload < Net::SCP::TestCase
 
     assert_scripted { scp.upload!(StringIO.new("abcde"), "/path/to/remote.txt", chunk_size: 2) }
   end
+
+  def test_upload_directory_should_skip_broken_symlink_and_raise_after_sending_the_rest
+    with_local_tree("a.txt" => "a\n", "b-broken" => :broken, "c.txt" => "c\n") do |local|
+      expect_scp_session("-t -r /path/to/remote") do |channel|
+        channel.gets_ok
+        channel.sends_data "D0755 0 local\n"
+        channel.gets_ok
+        expect_file_upload(channel, "a.txt", "a\n")
+        expect_file_upload(channel, "c.txt", "c\n")
+        channel.sends_data "E\n"
+        channel.gets_ok
+      end
+
+      e = assert_scripted_upload_error(local)
+      assert_equal "upload incomplete, skipped broken symlinks: #{File.join(local, 'b-broken').inspect}", e.message
+      assert_match(/WARN.*#{Regexp.escape(File.join(local, 'b-broken'))}: broken symlink, skipping/, @log.string)
+    end
+  end
+
+  def test_upload_directory_should_list_every_skipped_broken_symlink
+    with_local_tree("a-broken" => :broken, "b.txt" => "b\n", "sub" => { "c-broken" => :broken }) do |local|
+      expect_scp_session("-t -r /path/to/remote") do |channel|
+        channel.gets_ok
+        channel.sends_data "D0755 0 local\n"
+        channel.gets_ok
+        expect_file_upload(channel, "b.txt", "b\n")
+        channel.sends_data "D0755 0 sub\n"
+        channel.gets_ok
+        channel.sends_data "E\n"
+        channel.gets_ok
+        channel.sends_data "E\n"
+        channel.gets_ok
+      end
+
+      e = assert_scripted_upload_error(local)
+      skipped = [File.join(local, "a-broken"), File.join(local, "sub", "c-broken")]
+      assert_equal "upload incomplete, skipped broken symlinks: #{skipped.map(&:inspect).join(', ')}", e.message
+    end
+  end
+
+  def test_upload_directory_should_follow_valid_symlinks
+    with_local_tree("dir" => { "x.txt" => "x\n" }, "dir-link" => [:symlink, "dir"], "file-link" => [:symlink, "file.txt"], "file.txt" => "f\n") do |local|
+      expect_scp_session("-t -r /path/to/remote") do |channel|
+        channel.gets_ok
+        channel.sends_data "D0755 0 local\n"
+        channel.gets_ok
+        %w[dir dir-link].each do |name|
+          channel.sends_data "D0755 0 #{name}\n"
+          channel.gets_ok
+          expect_file_upload(channel, "x.txt", "x\n")
+          channel.sends_data "E\n"
+          channel.gets_ok
+        end
+        expect_file_upload(channel, "file-link", "f\n")
+        expect_file_upload(channel, "file.txt", "f\n")
+        channel.sends_data "E\n"
+        channel.gets_ok
+      end
+
+      assert_scripted { upload_recursively(local) }
+      assert_empty @log.string
+    end
+  end
+
+  def test_upload_directory_without_broken_symlinks_should_not_warn
+    with_local_tree("a.txt" => "a\n") do |local|
+      expect_scp_session("-t -r /path/to/remote") do |channel|
+        channel.gets_ok
+        channel.sends_data "D0755 0 local\n"
+        channel.gets_ok
+        expect_file_upload(channel, "a.txt", "a\n")
+        channel.sends_data "E\n"
+        channel.gets_ok
+      end
+
+      assert_scripted { upload_recursively(local) }
+      assert_empty @log.string
+    end
+  end
+
+  private
+
+  def with_local_tree(entries)
+    Dir.mktmpdir("net-scp-test") do |tmp|
+      local = File.join(File.realpath(tmp), "local")
+      build_local_tree(local, entries)
+      @log = StringIO.new
+      yield local
+    end
+  end
+
+  def build_local_tree(dir, entries)
+    Dir.mkdir(dir)
+    File.chmod(0o755, dir)
+    entries.each do |name, value|
+      path = File.join(dir, name)
+      case value
+      when String
+        File.binwrite(path, value)
+        File.chmod(0o644, path)
+      when Hash then build_local_tree(path, value)
+      when Array then File.symlink(value.last, path)
+      when :broken then File.symlink(File.join(dir, "missing-#{name}"), path)
+      end
+    end
+    Dir.stubs(:entries).with { |path| File.realpath(path) == dir }.returns(%w[. ..] + entries.keys.sort)
+  end
+
+  def expect_file_upload(channel, name, contents)
+    channel.sends_data "C0644 #{contents.bytesize} #{name}\n"
+    channel.gets_ok
+    channel.sends_data contents
+    channel.sends_ok
+    channel.gets_ok
+  end
+
+  def upload_recursively(local)
+    scp.logger = Logger.new(@log)
+    scp.upload!(local, "/path/to/remote", recursive: true)
+  end
+
+  def assert_scripted_upload_error(local)
+    error = Net::SSH::Test::Extensions::IO.with_test_extension do
+      assert_raises(Net::SCP::Error) { upload_recursively(local) }
+    end
+    assert_scripted { scp.session.process(0) }
+    error
+  end
 end
