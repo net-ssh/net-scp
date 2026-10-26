@@ -266,6 +266,16 @@ module Net
     # * :chunk_size - the size of each "chunk" that should be sent. Defaults
     #   to 2048. Changing this value may improve throughput at the expense
     #   of decreasing interactivity.
+    # * :quote - how +remote+ is quoted in the scp command run by the remote
+    #   shell. :posix (the default) escapes it for a POSIX shell, leaving a
+    #   leading "~" or "~/" unescaped so it expands to the remote home
+    #   directory ("~user/" is not expanded). :windows is for Win32-OpenSSH,
+    #   whose shell may be cmd.exe or PowerShell: backslashes become "/", the
+    #   path is wrapped in double quotes, and paths containing a double or curly
+    #   quote, $, `, %, !, CR, LF or NUL raise ArgumentError. :none sends the
+    #   path unchanged, for servers that don't run a shell (some routers and
+    #   appliances); never use it with untrusted input. A callable is given
+    #   +remote+ and returns the string to send.
     #
     # This method will return immediately, returning the Net::SSH::Connection::Channel
     # object that will support the upload. To wait for the upload to finish,
@@ -298,6 +308,7 @@ module Net
     # * :preserve - the atime and mtime of the file should be preserved.
     # * :verbose - the process should result in verbose output on the server
     #   end (useful for debugging).
+    # * :quote - how +remote+ is quoted for the remote shell (see #upload).
     #
     # This method will return immediately, returning the Net::SSH::Connection::Channel
     # object that will support the download. To wait for the download to finish,
@@ -348,15 +359,14 @@ module Net
       # (See Net::SCP::Upload and Net::SCP::Download).
       def start_command(mode, local, remote, options={}, &callback)
         local = local.to_path if local.is_a?(Pathname)
+        # Kept in channel[:remote] too, so a download's basename check sees "C:/a/b.txt" as b.txt.
+        remote = remote.to_s.tr("\\", "/") if options[:quote] == :windows
+        command = "#{scp_command(mode, options)} #{quote_remote(remote, options[:quote] || :posix)}"
+        if options[:shell]
+          command = "#{options[:shell]} -c '#{command.gsub("'") { "'\\''" }}'"
+        end
+
         session.open_channel do |channel|
-
-          if options[:shell]
-            escaped_file = shellescape(remote).gsub(/'/) { |m| "'\\''" }
-            command = "#{options[:shell]} -c '#{scp_command(mode, options)} #{escaped_file}'"
-          else
-            command = "#{scp_command(mode, options)} #{shellescape remote}"
-          end
-
           channel.exec(command) do |ch, success|
             if success
               channel[:local   ] = local
@@ -434,6 +444,29 @@ module Net
       # set, this does nothing.
       def progress_callback(channel, name, sent, total)
         channel[:callback].call(channel, name, sent, total) if channel[:callback]
+      end
+
+      # Inside double quotes cmd.exe still expands % and !, PowerShell expands $ and `, and PowerShell also ends a string at U+2018..U+201E.
+      WINDOWS_UNSAFE = /["$`%!\r\n\0\u2018-\u201E]/
+
+      def quote_remote(remote, quote)
+        case quote
+        when :posix
+          remote = remote.to_s
+          return remote if remote == "~" || remote == "~/"
+          return "~/#{shellescape(remote[2..])}" if remote.start_with?("~/")
+          shellescape(remote)
+        when :windows
+          if remote.dup.force_encoding(Encoding::UTF_8).match?(WINDOWS_UNSAFE)
+            raise ArgumentError, "remote path #{remote.inspect} contains a character that can't be quoted safely for a Windows shell"
+          end
+          "\"#{remote}\""
+        when :none
+          remote.to_s
+        else
+          raise ArgumentError, ":quote must be :posix, :windows, :none or a callable, got #{quote.inspect}" unless quote.respond_to?(:call)
+          quote.call(remote).to_s
+        end
       end
 
       # Imported from ruby 1.9.2 shellwords.rb
