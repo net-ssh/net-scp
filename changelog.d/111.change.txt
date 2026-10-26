@@ -1,0 +1,1 @@
+gemspec: claim compatibility with ruby v2.6-v4.0
