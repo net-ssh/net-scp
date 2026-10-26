@@ -369,22 +369,24 @@ module Net
               channel[:error_string] = +''
 
               channel.on_close do
-                # The close can be dispatched before on_process has consumed data that arrived with it.
-                send("#{channel[:state]}_state", channel)
-                # If we got an exit-status and it is not 0, something went wrong
-                if !channel[:exit].nil? && channel[:exit] != 0
-                  raise Net::SCP::Error, 'SCP did not finish successfully ' \
-                                         "(#{channel[:exit]}): #{channel[:error_string]}"
+                begin
+                  # The close can be dispatched before on_process has consumed data that arrived with it.
+                  send("#{channel[:state]}_state", channel)
+                  # If we got an exit-status and it is not 0, something went wrong
+                  if !channel[:exit].nil? && channel[:exit] != 0
+                    raise Net::SCP::Error, 'SCP did not finish successfully ' \
+                                           "(#{channel[:exit]}): #{channel[:error_string]}"
+                  end
+                  # A zero or missing exit-status does not prove the transfer completed.
+                  if channel[:state] != :finish
+                    message = +'SCP did not finish successfully (channel closed before end of transmission)'
+                    message << ": #{channel[:error_string]}" unless channel[:error_string].empty?
+                    raise Net::SCP::Error, message
+                  end
+                ensure
+                  io = channel[:io]
+                  io.close if io && io != channel[:local] && !io.closed?
                 end
-                # A zero or missing exit-status does not prove the transfer completed.
-                if channel[:state] != :finish
-                  message = +'SCP did not finish successfully (channel closed before end of transmission)'
-                  message << ": #{channel[:error_string]}" unless channel[:error_string].empty?
-                  raise Net::SCP::Error, message
-                end
-              ensure
-                io = channel[:io]
-                io.close if io && io != channel[:local] && !io.closed?
               end
               channel.on_data                   { |ch2, data| channel[:buffer].append(data) }
               channel.on_extended_data          { |ch2, type, data| debug { data.chomp } }

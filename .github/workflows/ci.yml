@@ -23,3 +23,18 @@ jobs:
         run: bundle exec rake test
         env:
           RUBYOPT: "--enable=frozen_string_literal"
+  test-legacy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby-version: ['2.3', '2.4', '2.5']
+    steps:
+      - uses: actions/checkout@v3
+      # Plain docker run rather than container: the ruby:2.3/2.4 images' glibc is too old for the actions' Node.
+      # Not rake test: the Rakefile loads changelogd, which these Rubies can't install.
+      # No frozen_string_literal: net-ssh 6 mutates string literals.
+      - name: Run Tests
+        run: >-
+          docker run --rm -v "$PWD:/w" -w /w -e BUNDLE_GEMFILE=gemfiles/legacy.gemfile ruby:${{ matrix.ruby-version }}
+          sh -c 'bundle install --jobs 4 && bundle exec ruby -Ilib -Itest -e "Dir.glob(\"./test/test_*.rb\").each { |f| require f }"'

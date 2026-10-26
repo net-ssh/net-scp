@@ -17,6 +17,7 @@ Gem::Specification.new do |spec|
   spec.homepage      = "https://github.com/net-ssh/net-scp"
   spec.license       = "MIT"
   spec.required_rubygems_version = Gem::Requirement.new(">= 0") if spec.respond_to? :required_rubygems_version=
+  spec.required_ruby_version = ">= 2.3"
   spec.metadata      = {
     "changelog_uri" => "https://github.com/net-ssh/net-scp/blob/master/CHANGES.txt"
   }
