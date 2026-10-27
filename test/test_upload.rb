@@ -650,12 +650,7 @@ class TestUpload < Net::SCP::TestCase
       local = File.join(File.realpath(tmp), "local")
       build_local_tree(local, entries)
       @log = StringIO.new
-      begin
-        yield local
-      ensure
-        # Before 2.6, mktmpdir's cleanup lists directories with Dir.entries.
-        Dir.unstub(:entries)
-      end
+      yield local
     end
   end
 

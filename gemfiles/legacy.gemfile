@@ -1,7 +1,0 @@
-# Ruby 2.3-2.5: the last net-ssh and mocha releases that still install there.
-source 'https://rubygems.org'
-
-gemspec path: ".."
-
-gem "net-ssh", "< 7"
-gem "mocha", "< 2"
