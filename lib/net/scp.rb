@@ -458,10 +458,10 @@ module Net
         when :posix
           remote = remote.to_s
           return remote if remote == "~" || remote == "~/"
-          return "~/#{shellescape(remote[2..])}" if remote.start_with?("~/")
+          return "~/#{shellescape(remote[2..-1])}" if remote.start_with?("~/")
           shellescape(remote)
         when :windows
-          if remote.dup.force_encoding(Encoding::UTF_8).match?(WINDOWS_UNSAFE)
+          if remote.dup.force_encoding(Encoding::UTF_8) =~ WINDOWS_UNSAFE
             raise ArgumentError, "remote path #{remote.inspect} contains a character that can't be quoted safely for a Windows shell"
           end
           "\"#{remote}\""
