@@ -381,8 +381,10 @@ module Net
 
               channel.on_close do
                 begin
+                  next if channel[:aborted]
+
                   # The close can be dispatched before on_process has consumed data that arrived with it.
-                  send("#{channel[:state]}_state", channel)
+                  process_state(channel)
                   # If we got an exit-status and it is not 0, something went wrong
                   if !channel[:exit].nil? && channel[:exit] != 0
                     raise Net::SCP::Error, 'SCP did not finish successfully ' \
@@ -395,20 +397,38 @@ module Net
                     raise Net::SCP::Error, message
                   end
                 ensure
-                  io = channel[:io]
-                  io.close if io && io != channel[:local] && !io.closed?
+                  close_owned_io(channel)
                 end
               end
               channel.on_data                   { |ch2, data| channel[:buffer].append(data) }
               channel.on_extended_data          { |ch2, type, data| debug { data.chomp } }
               channel.on_request("exit-status") { |ch2, data| channel[:exit] = data.read_long }
-              channel.on_process                { send("#{channel[:state]}_state", channel) }
+              channel.on_process                { process_state(channel) unless channel[:aborted] }
             else
               channel.close
               raise Net::SCP::Error, "could not exec scp on the remote host"
             end
           end
         end
+      end
+
+      # Runs the action for the current state. If it raises, the transfer is
+      # aborted and the channel closed, so the error surfaces once and the
+      # session stays usable.
+      def process_state(channel)
+        send("#{channel[:state]}_state", channel)
+      rescue Exception
+        channel[:aborted] = true
+        close_owned_io(channel)
+        channel.close
+        raise
+      end
+
+      # Closes the IO opened by the library; an IO passed in by the caller is
+      # left open.
+      def close_owned_io(channel)
+        io = channel[:io]
+        io.close if io && io != channel[:local] && !io.closed?
       end
 
       # Causes the state machine to enter the "await response" state, where
