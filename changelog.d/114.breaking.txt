@@ -1,0 +1,1 @@
+Require Ruby 2.6 or later. Bundler on Ruby 2.3-2.5 resolves to 4.1.3. [#114]
