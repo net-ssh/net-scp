@@ -69,6 +69,24 @@ require 'uri/open-scp'
 data = open("scp://user@host/path/to/file.txt").read
 ```
 
+The remote path is escaped for a POSIX shell, except that a leading `~` or
+`~/` is left for the remote shell to expand to the home directory (`~user/` is
+not expanded). Use the `quote:` option of `upload`/`download` for other
+servers:
+
+```ruby
+# Win32-OpenSSH (cmd.exe or PowerShell): the path is double-quoted and "\" becomes "/".
+# Paths containing ", $, `, %, !, curly quotes, CR, LF or NUL raise ArgumentError.
+scp.upload! "/local/path", "C:\\Program Files\\App\\file.txt", quote: :windows
+
+# Servers that don't run a shell (MikroTik and other appliances): the path is
+# sent unchanged. Never use this with untrusted paths.
+scp.download! "flash/backup.rsc", "/local/backup.rsc", quote: :none
+
+# Or quote it yourself
+scp.upload! "/local/path", remote, quote: ->(path) { "'#{path}'" }
+```
+
 For more information, see Net::SCP.
 
 ## REQUIREMENTS:
