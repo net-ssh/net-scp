@@ -259,7 +259,8 @@ module Net
     #
     # * :recursive - the +local+ parameter refers to a local directory, which
     #   should be uploaded to a new directory named +remote+ on the remote
-    #   server.
+    #   server. Broken symlinks in it are skipped with a warning, and once
+    #   everything else is uploaded a Net::SCP::Error listing them is raised.
     # * :preserve - the atime and mtime of the file should be preserved.
     # * :verbose - the process should result in verbose output on the server
     #   end (useful for debugging).
@@ -440,6 +441,7 @@ module Net
       # of the pipe, and allows the pipe to drain until the server closes it.
       def finish_state(channel)
         channel.eof!
+        raise_if_entries_skipped(channel)
       end
 
       # Invoked to report progress back to the client. If a callback was not

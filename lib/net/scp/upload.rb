@@ -49,7 +49,8 @@ module Net; class SCP
         directive = "D%04o %d %s\n" % [mode, 0, File.basename(channel[:current])]
         channel.send_data(directive)
         channel[:cwd] = channel[:current]
-        channel[:stack] << Dir.entries(channel[:current]).reject { |i| i == "." || i == ".." }
+        entries = Dir.entries(channel[:current]).reject { |i| i == "." || i == ".." }
+        channel[:stack] << entries.reject { |i| skip_broken_symlink(channel, File.join(channel[:current], i)) }
         await_response(channel, :next_item)
       end
     end
@@ -122,6 +123,29 @@ module Net; class SCP
       if channel[:current].respond_to?(:read) && channel[:current].respond_to?(:pos)
         channel[:size] = [channel[:size] - channel[:current].pos, 0].max
       end
+    end
+
+    # Returns true if +path+ is a symlink whose target doesn't exist, after
+    # logging a warning and recording it for #raise_if_entries_skipped.
+    def skip_broken_symlink(channel, path)
+      return false unless File.symlink?(path) && !File.exist?(path)
+
+      lwarn { "#{path}: broken symlink, skipping" }
+      (channel[:skipped] ||= []) << path
+      true
+    end
+
+    # Once the remote has closed the channel, raises a Net::SCP::Error listing
+    # the entries skipped by #skip_broken_symlink, if any.
+    def raise_if_entries_skipped(channel)
+      return unless channel.closing? && channel[:skipped]
+
+      # Cleared so it raises once, as on_process keeps calling this until the close is flushed.
+      skipped, channel[:skipped] = channel[:skipped], nil
+      # A failed remote scp is reported by start_command's exit-status check instead.
+      return unless channel[:exit].to_i.zero?
+
+      raise Net::SCP::Error, "upload incomplete, skipped broken symlinks: #{skipped.map(&:inspect).join(', ')}"
     end
 
     # If the :preserve option is set, send a 'T' directive and wait for the
