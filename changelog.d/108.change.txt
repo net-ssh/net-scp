@@ -1,1 +1,0 @@
-Recursive uploads no longer abort on a broken symlink: it is skipped with a warning, the rest is uploaded, and a Net::SCP::Error listing the skipped paths is raised at the end, like OpenSSH scp. Based on #23 by @maage. [#108, #23]

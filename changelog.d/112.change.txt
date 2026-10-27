@@ -1,1 +1,0 @@
-Load again on Ruby 2.3-2.5 (4.1.2 needed 2.5), and declare `required_ruby_version >= 2.3` [#112, #110]
