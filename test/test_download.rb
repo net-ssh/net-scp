@@ -577,7 +577,7 @@ class TestDownload < Net::SCP::TestCase
         e = assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote", "#{tmp}/local", :recursive => true) }
         assert_match(/symlink/, e.message)
       end
-      assert_equal [], Dir.children("#{tmp}/outside")
+      assert_equal [], Dir.entries("#{tmp}/outside") - %w[. ..]
     end
   end
 

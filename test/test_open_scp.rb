@@ -16,7 +16,7 @@ class TestOpenSCP < Net::SCP::TestCase
       @local = local
       @options = options
       io = local || StringIO.new(String.new)
-      total = @chunks.sum(&:bytesize)
+      total = @chunks.map(&:bytesize).inject(0, :+)
       sent = 0
       progress&.call(:channel, File.basename(remote), sent, total)
       @chunks.each do |chunk|

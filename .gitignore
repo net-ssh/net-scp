@@ -11,3 +11,4 @@ doc
 Gemfile.lock
 
 lib/net/ssh/version.rb.old
+/gemfiles/*.lock
