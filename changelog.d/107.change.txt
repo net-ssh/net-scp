@@ -1,1 +1,0 @@
-An exception raised during a transfer, such as `upload!` of a missing local file or an error from a progress callback, no longer leaves the channel registered and re-raises on later operations on the same session; the original error is raised once, library-opened files are closed and caller-passed IO is left open. Thanks @ThomasSevestre and @OskarEichler [#107, #26, #97]

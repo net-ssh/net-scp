@@ -1,3 +1,9 @@
+=== 4.2.0
+
+* BREAKING: Require Ruby 2.6 or later. Bundler on Ruby 2.3-2.5 resolves to 4.1.3. [#114]
+* Package only `lib`, `CHANGES.txt`, `LICENSE.txt` and `README.md` in the gem, about 40% smaller. Thanks @yuri-zubov [#118]
+* An exception raised during a transfer, such as `upload!` of a missing local file or an error from a progress callback, no longer leaves the channel registered and re-raises on later operations on the same session; the original error is raised once, library-opened files are closed and caller-passed IO is left open. Thanks @ThomasSevestre and @OskarEichler [#107, #26, #97]
+
 === 4.1.3
 
 * Load again on Ruby 2.3-2.5 (4.1.2 needed 2.5), and declare `required_ruby_version >= 2.3` [#112, #110]
