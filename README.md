@@ -47,6 +47,11 @@ Net::SCP.download!("remote.host.com", "username",
   "/remote/path", "/local/path",
   :ssh => { :password => "password" })
 
+# download with the bandwidth limited to 400 Kbit/s, like `scp -l 400`
+Net::SCP.download!("remote.host.com", "username",
+  "/remote/path", "/local/path",
+  :ssh => { :password => "password" }, :limit => 400)
+
 # download a file to an in-memory buffer
 data = Net::SCP::download!("remote.host.com", "username", "/remote/path")
 

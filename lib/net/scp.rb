@@ -94,6 +94,7 @@ module Net
   #   be sent to indicate the modification and access times of each file.
   # * "-r" -- recursive transfers should be allowed. Without this, it is an
   #   error to upload or download a directory.
+  # * "-l" -- limit the bandwidth used by the transfer, in Kbit/s.
   #
   # After those flags, the name of the remote file/directory should be passed
   # as the sole non-switch argument to scp.
@@ -267,6 +268,8 @@ module Net
     # * :chunk_size - the size of each "chunk" that should be sent. Defaults
     #   to 2048. Changing this value may improve throughput at the expense
     #   of decreasing interactivity.
+    # * :limit - the bandwidth limit in Kbit/s, a positive Integer, like
+    #   <tt>scp -l</tt>. The remote scp enforces it.
     # * :quote - how +remote+ is quoted in the scp command run by the remote
     #   shell. :posix (the default) escapes it for a POSIX shell, leaving a
     #   leading "~" or "~/" unescaped so it expands to the remote home
@@ -309,6 +312,7 @@ module Net
     # * :preserve - the atime and mtime of the file should be preserved.
     # * :verbose - the process should result in verbose output on the server
     #   end (useful for debugging).
+    # * :limit - the bandwidth limit in Kbit/s (see #upload).
     # * :quote - how +remote+ is quoted for the remote shell (see #upload).
     #
     # This method will return immediately, returning the Net::SSH::Connection::Channel
@@ -343,7 +347,7 @@ module Net
 
       # Constructs the scp command line needed to initiate and SCP session
       # for the given +mode+ (:upload or :download) and with the given options
-      # (:verbose, :recursive, :preserve). Returns the command-line as a
+      # (:verbose, :recursive, :preserve, :limit). Returns the command-line as a
       # string, ready to execute.
       def scp_command(mode, options)
         command = +"scp "
@@ -351,6 +355,11 @@ module Net
         command << " -v" if options[:verbose]
         command << " -r" if options[:recursive]
         command << " -p" if options[:preserve]
+        limit = options[:limit]
+        unless limit.nil?
+          raise ArgumentError, ":limit must be a positive Integer" unless limit.is_a?(Integer) && limit > 0
+          command << " -l #{limit}"
+        end
         command
       end
 
