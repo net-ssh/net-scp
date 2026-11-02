@@ -1,1 +1,0 @@
-Add a `:limit` option to `upload`/`download` to cap bandwidth in Kbit/s, like `scp -l`. Based on #53 by @marcelrouw [#119, #53]
