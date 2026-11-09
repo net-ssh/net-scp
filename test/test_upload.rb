@@ -666,6 +666,92 @@ class TestUpload < Net::SCP::TestCase
     assert_scripted { scp.upload!(StringIO.new("abcde"), "/path/to/remote.txt", chunk_size: 2) }
   end
 
+  def test_upload_io_growing_after_announcement_should_send_only_announced_bytes
+    io = StringIO.new("abc")
+
+    expect_scp_session "-t /path/to/remote.txt" do |channel|
+      channel.gets_ok
+      channel.sends_data "C0640 3 remote.txt\n"
+      channel.gets_ok
+      channel.sends_data "abc"
+      channel.sends_ok
+      channel.gets_ok
+    end
+
+    Timeout.timeout(5) do
+      assert_scripted { scp.upload!(io, "/path/to/remote.txt") { |_ch, _name, sent, _total| io.string << "def" if sent == 0 } }
+    end
+  end
+
+  def test_upload_io_shrinking_after_announcement_should_raise
+    io = StringIO.new("abc")
+    def io.size; 6; end
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec "scp -t /path/to/remote.txt"
+      channel.gets_ok
+      channel.sends_data "C0640 6 remote.txt\n"
+      channel.gets_ok
+      channel.sends_data "abc"
+      channel.sends_close
+      channel.gets_close
+    end
+
+    Timeout.timeout(5) do
+      assert_scripted do
+        e = assert_raises(Net::SCP::Error) { scp.upload!(io, "/path/to/remote.txt") }
+        assert_equal "/path/to/remote.txt: source ended after 3 of 6 bytes", e.message
+        connection.loop
+      end
+    end
+  end
+
+  def test_upload_io_should_count_bytes_not_characters
+    io = Object.new
+    def io.size; 4; end
+    def io.read(_length); @read ? nil : (@read = true; "éé"); end
+
+    expect_scp_session "-t /path/to/remote.txt" do |channel|
+      channel.gets_ok
+      channel.sends_data "C0640 4 remote.txt\n"
+      channel.gets_ok
+      channel.sends_data "éé".b
+      channel.sends_ok
+      channel.gets_ok
+    end
+
+    progress = []
+    Timeout.timeout(5) do
+      assert_scripted { scp.upload!(io, "/path/to/remote.txt") { |_ch, _name, sent, total| progress << [sent, total] } }
+    end
+    assert_equal [[0, 4], [4, 4]], progress
+  end
+
+  def test_upload_io_returning_more_than_requested_should_raise
+    io = Object.new
+    def io.size; 3; end
+    def io.read(_length); "abcdef"; end
+
+    story do |session|
+      channel = session.opens_channel
+      channel.sends_exec "scp -t /path/to/remote.txt"
+      channel.gets_ok
+      channel.sends_data "C0640 3 remote.txt\n"
+      channel.gets_ok
+      channel.sends_close
+      channel.gets_close
+    end
+
+    Timeout.timeout(5) do
+      assert_scripted do
+        e = assert_raises(Net::SCP::Error) { scp.upload!(io, "/path/to/remote.txt") }
+        assert_equal "/path/to/remote.txt: read returned 6 bytes, more than the 3 requested", e.message
+        connection.loop
+      end
+    end
+  end
+
   def test_upload_directory_should_skip_broken_symlink_and_raise_after_sending_the_rest
     with_local_tree("a.txt" => "a\n", "b-broken" => :broken, "c.txt" => "c\n") do |local|
       expect_scp_session("-t -r /path/to/remote") do |channel|
