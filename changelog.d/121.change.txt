@@ -1,0 +1,1 @@
+Downloads into an IO-like object whose `write` returns a partial byte count now retry until the whole chunk is written, instead of reporting success with only part of the file stored; a count of zero, a negative one or one larger than the chunk raises `Net::SCP::Error`. Thanks @OskarEichler [#121, #99]
