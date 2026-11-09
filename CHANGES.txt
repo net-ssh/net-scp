@@ -1,3 +1,8 @@
+=== 4.2.2
+
+* Downloads into an IO-like object whose `write` returns a partial byte count now retry until the whole chunk is written, instead of reporting success with only part of the file stored; a count of zero, a negative one or one larger than the chunk raises `Net::SCP::Error`. Thanks @OskarEichler [#121, #99]
+* Uploads now send exactly the number of bytes announced to the server, counted in bytes rather than characters: data a source gains after the size is taken is not sent, and a source that ends early or a reader returning more than requested raises `Net::SCP::Error` instead of completing a short or overlong transfer. Previously the extra bytes of an overlong upload could be read by the server as the next SCP command. Thanks @OskarEichler [#120, #98]
+
 === 4.2.1
 
 * Add a `:limit` option to `upload`/`download` to cap bandwidth in Kbit/s, like `scp -l`. Based on #53 by @marcelrouw [#119, #53]
