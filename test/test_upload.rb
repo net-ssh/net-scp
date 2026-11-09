@@ -667,7 +667,7 @@ class TestUpload < Net::SCP::TestCase
   end
 
   def test_upload_io_growing_after_announcement_should_send_only_announced_bytes
-    io = StringIO.new("abc")
+    io = StringIO.new(+"abc")
 
     expect_scp_session "-t /path/to/remote.txt" do |channel|
       channel.gets_ok
