@@ -70,16 +70,26 @@ module Net; class SCP
       end
     end
 
-    # If any data remains to be transferred from the current file, sends it.
-    # Otherwise, sends a 0-byte and transfers to #next_item_state.
+    # If any of the announced bytes remain to be transferred from the current
+    # file, sends the next chunk of them. Otherwise, sends a 0-byte and
+    # transfers to #next_item_state. Data beyond the size announced in the 'C'
+    # directive is never read, as the server would take it as the next directive.
     def send_data_state(channel)
-      data = channel[:io].read(channel[:chunk_size])
-      if data.nil?
+      remaining = channel[:size] - channel[:sent]
+      if remaining <= 0
         channel[:io].close unless channel[:local].respond_to?(:read)
         channel.send_data("\0")
         await_response(channel, :next_item)
       else
-        channel[:sent] += data.length
+        length = [channel[:chunk_size], remaining].min
+        data = channel[:io].read(length)
+        if data.nil? || data.empty?
+          raise Net::SCP::Error, "#{channel[:name]}: source ended after #{channel[:sent]} of #{channel[:size]} bytes"
+        elsif data.bytesize > length
+          raise Net::SCP::Error, "#{channel[:name]}: read returned #{data.bytesize} bytes, more than the #{length} requested"
+        end
+
+        channel[:sent] += data.bytesize
         progress_callback(channel, channel[:name], channel[:sent], channel[:size])
         channel.send_data(data)
       end
