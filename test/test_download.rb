@@ -740,6 +740,52 @@ class TestDownload < Net::SCP::TestCase
     end
   end
 
+  def test_download_into_io_accepting_partial_writes_should_write_whole_chunk
+    io = Object.new
+    def io.data; @data ||= +""; end
+    def io.write(data); self.data << data.byteslice(0, 2); [data.bytesize, 2].min; end
+
+    expect_scp_session "-f /path/to/remote.txt" do |channel|
+      channel.sends_ok
+      channel.gets_data "C0644 6 remote.txt\n"
+      channel.sends_ok
+      channel.gets_data "abcdef"
+      channel.gets_ok
+      channel.sends_ok
+    end
+
+    Timeout.timeout(5) do
+      assert_scripted { scp.download!("/path/to/remote.txt", io) }
+    end
+    assert_equal "abcdef", io.data
+  end
+
+  [0, -1, 7].each do |written|
+    define_method("test_download_into_io_whose_write_returns_#{written}_should_raise") do
+      io = Object.new
+      io.define_singleton_method(:write) { |_data| written }
+
+      story do |session|
+        channel = session.opens_channel
+        channel.sends_exec "scp -f /path/to/remote.txt"
+        channel.sends_ok
+        channel.gets_data "C0644 6 remote.txt\n"
+        channel.sends_ok
+        channel.gets_data "abcdef"
+        channel.sends_close
+        channel.gets_close
+      end
+
+      Timeout.timeout(5) do
+        assert_scripted do
+          e = assert_raises(Net::SCP::Error) { scp.download!("/path/to/remote.txt", io) }
+          assert_equal "remote.txt: write returned #{written} for 6 bytes", e.message
+          connection.loop
+        end
+      end
+    end
+  end
+
   private
 
     def with_tmpdir

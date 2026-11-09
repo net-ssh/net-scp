@@ -67,10 +67,24 @@ module Net; class SCP
     def read_data_state(channel)
       return if channel[:buffer].empty?
       data = channel[:buffer].read!(channel[:remaining])
-      channel[:io].write(data)
+      write_fully(channel, data)
       channel[:remaining] -= data.length
       progress_callback(channel, channel[:file][:name], channel[:file][:size] - channel[:remaining], channel[:file][:size])
       await_response(channel, :finish_read) if channel[:remaining] <= 0
+    end
+
+    # Writes +data+ to the local IO, retrying after partial writes. A write
+    # returning something other than an Integer is taken to have written all
+    # of it, as for sinks like uri/open-scp's that return the buffer.
+    def write_fully(channel, data)
+      until data.empty?
+        written = channel[:io].write(data)
+        return unless written.is_a?(Integer)
+        unless written > 0 && written <= data.bytesize
+          raise Net::SCP::Error, "#{channel[:file][:name]}: write returned #{written} for #{data.bytesize} bytes"
+        end
+        data = data.byteslice(written..-1)
+      end
     end
 
     # Finishes off the read, sets the times for the file (if any), and then
